@@ -88,16 +88,12 @@ import sys
 try:
     from scipy import stats
 except ImportError:
-    import sys
-    import subprocess
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "scipy"])
-        from scipy import stats
-    except Exception as e:
-        st.error(f"scipyのインストールに失敗しました: {e}")
-        st.error("トレンド分析を行うにはscipyモジュールが必要です。手動でインストールしてください。")
-        # 代替処理を提供
-        def linregress(x, y):
+    # 代替実装を提供
+    class StatsReplacement:
+        def __init__(self):
+            pass
+        
+        def linregress(self, x, y):
             # 簡易的な線形回帰の実装
             n = len(x)
             if n != len(y) or n < 2:
@@ -108,13 +104,9 @@ except ImportError:
             ss_xx = sum((x[i] - mean_x) ** 2 for i in range(n))
             slope = ss_xy / ss_xx if ss_xx != 0 else 0
             return slope, 0, 0, 0, 0
-        
-        # statsモジュールの代替を提供
-        class StatsReplacement:
-            def __init__(self):
-                self.linregress = linregress
-        
-        stats = StatsReplacement()
+    
+    stats = StatsReplacement()
+    # エラーメッセージは表示しない
 
 # ページ設定
 st.set_page_config(
