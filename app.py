@@ -639,15 +639,50 @@ if uploaded_file is not None:
                     
                     # 日付ごとの平均回答時間グラフ
                     st.markdown('<div class="subsection-title">日付ごとの平均解答時間</div>', unsafe_allow_html=True)
-                    fig, ax = plt.subplots(figsize=(10, 6))
-                    ax.plot(daily_time_avg.index, daily_time_avg.values, label='日次平均時間', marker='o')
-                    ax.plot(time_rolling_avg.index, time_rolling_avg.values, label='7日移動平均', linewidth=2)
-                    ax.set_ylabel('解答時間（分）')
-                    ax.set_xlabel('学習日')
-                    ax.legend()
-                    ax.grid(True, alpha=0.3)
-                    plt.tight_layout()
-                    st.pyplot(fig)
+
+                    # 日付ごとの平均解答時間を計算
+                    try:
+                        # 日付ごとのグループ化が正しく行われているか確認
+                        daily_time_avg = df.groupby(date_col)['回答時間（分）'].mean()
+                        
+                        # データが存在するか確認
+                        if len(daily_time_avg) > 0:
+                            # 移動平均を計算（7日間）
+                            time_rolling_avg = daily_time_avg.rolling(window=7, min_periods=1).mean()
+                            
+                            # グラフ描画
+                            fig, ax = plt.subplots(figsize=(10, 6))
+                            ax.plot(daily_time_avg.index, daily_time_avg.values, label='日次平均時間', marker='o')
+                            ax.plot(time_rolling_avg.index, time_rolling_avg.values, label='7日移動平均', linewidth=2)
+                            ax.set_ylabel('解答時間（分）')
+                            ax.set_xlabel('学習日')
+                            ax.legend()
+                            ax.grid(True, alpha=0.3)
+                            plt.tight_layout()
+                            st.pyplot(fig)
+                            
+                            # 日付ごとの解答時間データを表示
+                            st.markdown('<div class="subsection-title">日付ごとの解答時間データ</div>', unsafe_allow_html=True)
+                            time_daily_data = pd.DataFrame({
+                                '日付': daily_time_avg.index,
+                                '問題数': df.groupby(date_col).size().values,
+                                '平均解答時間（分）': [f"{val:.1f}" for val in daily_time_avg.values],
+                                '7日移動平均（分）': [f"{val:.1f}" for val in time_rolling_avg.values]
+                            })
+                            
+                            # 日付を見やすい形式に変換
+                            time_daily_data['日付'] = time_daily_data['日付'].dt.strftime('%Y-%m-%d')
+                            
+                            # 最新の日付が上に来るように並べ替え
+                            time_daily_data = time_daily_data.sort_values('日付', ascending=False)
+                            
+                            # 表を表示
+                            st.dataframe(time_daily_data)
+                        else:
+                            st.markdown('<div class="warning-box">解答時間のデータが十分ではありません。</div>', unsafe_allow_html=True)
+                    except Exception as e:
+                        st.markdown(f'<div class="error-box">解答時間グラフの生成中にエラーが発生しました: {str(e)}</div>', unsafe_allow_html=True)
+                    st.write("エラーの詳細:", e)
                     
                     # 分野ごとの平均回答時間
                     category_time_avg = df.groupby(category_col)['回答時間（分）'].mean().sort_values(ascending=False)
