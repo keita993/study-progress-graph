@@ -64,14 +64,14 @@ if uploaded_file is not None:
         # 分野ごとの問題数
         category_count = df.groupby('分野').size().sort_values(ascending=False)
         
-        # データフレーム表示
-        st.header("分野ごとの問題数")
-        st.dataframe(category_count.reset_index().rename(
-            columns={'index': '分野', 0: '問題数'}))
-        
-        st.header("日別の平均正答率")
-        st.dataframe(daily_avg.reset_index().rename(
-            columns={'学習日': '日付', '正答率': '平均正答率'}))
+        # 分野ごとの問題数と正答率表示
+        st.header("分野ごとの問題数と正答率")
+        category_stats = category_count.reset_index().rename(columns={'index': '分野', 0: '問題数'})
+        category_percent = category_avg.reset_index()
+        category_percent['正答率'] = category_percent['正答率'] * 100
+        category_percent['正答率'] = category_percent['正答率'].map('{:.1f}%'.format)
+        category_stats['平均正答率'] = category_percent['正答率'].values
+        st.dataframe(category_stats)
         
     except Exception as e:
         st.error(f"エラーが発生しました: {str(e)}")
