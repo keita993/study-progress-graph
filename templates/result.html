@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分析結果 - 応用情報技術者試験 学習分析</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>応用情報技術者試験 学習分析結果</h1>
+        
+        <div class="summary">
+            <h2>概要</h2>
+            <p>全体の平均正答率: {{ "%.1f"|format(overall_avg*100) }}%</p>
+            <p>直近の平均正答率: {{ "%.1f"|format(recent_avg*100) }}%</p>
+        </div>
+        
+        <div class="graph-container">
+            <h2>日付ごとの平均正答率</h2>
+            <img src="data:image/png;base64,{{ daily_graph }}" alt="日付ごとの平均正答率グラフ">
+        </div>
+        
+        <div class="graph-container">
+            <h2>分野ごとの平均正答率</h2>
+            <img src="data:image/png;base64,{{ category_graph }}" alt="分野ごとの平均正答率グラフ">
+        </div>
+        
+        <div class="category-stats">
+            <h2>分野ごとの問題数</h2>
+            <table>
+                <tr>
+                    <th>分野</th>
+                    <th>問題数</th>
+                </tr>
+                {% for category, count in category_count.items() %}
+                <tr>
+                    <td>{{ category }}</td>
+                    <td>{{ count }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        
+        <div class="daily-stats">
+            <h2>日別の平均正答率</h2>
+            <table>
+                <tr>
+                    <th>日付</th>
+                    <th>平均正答率</th>
+                </tr>
+                {% for date, avg in daily_avg.items() %}
+                <tr>
+                    <td>{{ date }}</td>
+                    <td>{{ "%.1f"|format(avg*100) }}%</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        
+        <div class="back-link">
+            <a href="{{ url_for('index') }}">トップに戻る</a>
+        </div>
+    </div>
+</body>
+</html> 

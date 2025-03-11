@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>応用情報技術者試験 学習分析</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>応用情報技術者試験 学習分析</h1>
+        
+        {% if error %}
+        <div class="error">
+            <p>エラー: {{ error }}</p>
+        </div>
+        {% endif %}
+        
+        <div class="upload-form">
+            <h2>CSVファイルをアップロード</h2>
+            <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+                <input type="file" name="file" accept=".csv">
+                <button type="submit">分析開始</button>
+            </form>
+        </div>
+        
+        <div class="instructions">
+            <h2>使い方</h2>
+            <ol>
+                <li>応用情報技術者試験の学習記録CSVファイルを選択します</li>
+                <li>「分析開始」ボタンをクリックします</li>
+                <li>学習日ごとの平均点や分野ごとの成績などが表示されます</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html> 
