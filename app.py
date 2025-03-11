@@ -602,6 +602,94 @@ if uploaded_file is not None:
         else:
             st.info("解答時間のデータが見つかりませんでした。")
         
+        # AI分析コメント機能
+        def generate_ai_analysis(df, score_col, date_col, category_col, time_col):
+            """学習データに基づいたAI分析コメントを生成する関数"""
+            comments = []
+            
+            # 全体の傾向分析
+            overall_avg = df[score_col].mean() * 100
+            if overall_avg >= 80:
+                comments.append(f"全体の平均正答率は{overall_avg:.1f}%で非常に良好です。応用情報技術者試験に必要な知識をしっかり身につけています。")
+            elif overall_avg >= 60:
+                comments.append(f"全体の平均正答率は{overall_avg:.1f}%で良好です。さらに得点を伸ばすために苦手分野を重点的に学習しましょう。")
+            else:
+                comments.append(f"全体の平均正答率は{overall_avg:.1f}%です。基礎的な部分から復習することをお勧めします。")
+            
+            # 最近の傾向分析
+            if len(df) >= 10:
+                recent_df = df.sort_values(date_col, ascending=False).head(10)
+                recent_avg = recent_df[score_col].mean() * 100
+                overall_avg = df[score_col].mean() * 100
+                
+                if recent_avg > overall_avg + 5:
+                    comments.append(f"最近10問の平均正答率は{recent_avg:.1f}%で、全体平均より{recent_avg-overall_avg:.1f}%高くなっています。学習の成果が出ています！")
+                elif recent_avg < overall_avg - 5:
+                    comments.append(f"最近10問の平均正答率は{recent_avg:.1f}%で、全体平均より{overall_avg-recent_avg:.1f}%低くなっています。疲れが出ているかもしれません。休息も大切にしましょう。")
+            
+            # 苦手分野の分析
+            category_avg = df.groupby(category_col)[score_col].mean() * 100
+            worst_categories = category_avg.sort_values().head(3)
+            if len(worst_categories) > 0:
+                worst_cat_names = ", ".join([f"{cat}({avg:.1f}%)" for cat, avg in worst_categories.items()])
+                comments.append(f"苦手な分野は {worst_cat_names} です。これらの分野を重点的に学習することで全体の正答率向上が期待できます。")
+            
+            # 得意分野の分析
+            best_categories = category_avg.sort_values(ascending=False).head(3)
+            if len(best_categories) > 0:
+                best_cat_names = ", ".join([f"{cat}({avg:.1f}%)" for cat, avg in best_categories.items()])
+                comments.append(f"得意な分野は {best_cat_names} です。これらの分野の知識を活かして関連分野の学習も進めましょう。")
+            
+            # 解答時間の分析
+            if 'time_col' in locals() and '回答時間（分）' in df.columns:
+                avg_time = df['回答時間（分）'].mean()
+                if avg_time > 30:
+                    comments.append(f"平均解答時間は{avg_time:.1f}分です。解答のスピードを上げるために、基本的な知識の定着を図りましょう。")
+                elif avg_time < 10:
+                    comments.append(f"平均解答時間は{avg_time:.1f}分と速いです。解答の正確性も確認しながら進めましょう。")
+            
+            # 学習ペースの分析
+            study_days = len(df[date_col].unique())
+            total_questions = len(df)
+            if study_days > 0:
+                questions_per_day = total_questions / study_days
+                if questions_per_day >= 10:
+                    comments.append(f"1日平均{questions_per_day:.1f}問と良いペースで学習を続けています。このペースを維持しましょう。")
+                elif questions_per_day < 5:
+                    comments.append(f"1日平均{questions_per_day:.1f}問です。可能であれば学習量を増やすことを検討してみてください。")
+            
+            # 学習の継続性分析
+            if study_days > 1:
+                date_diff = (df[date_col].max() - df[date_col].min()).days
+                if date_diff > 0:
+                    continuity = study_days / date_diff
+                    if continuity >= 0.7:
+                        comments.append("学習の継続性が高く、素晴らしいです。継続は力なりです！")
+                    elif continuity <= 0.3:
+                        comments.append("学習の間隔が空いています。定期的な学習習慣を作ることで効果が高まります。")
+            
+            return comments
+
+        # AIコメント表示部分を追加
+        st.header("AI分析コメント")
+        if st.button("AI分析を実行"):
+            with st.spinner("分析中..."):
+                ai_comments = generate_ai_analysis(df, score_col, date_col, category_col, time_col)
+                
+                for i, comment in enumerate(ai_comments):
+                    st.info(comment)
+                
+                # 総合アドバイス
+                st.subheader("総合アドバイス")
+                overall_avg = df[score_col].mean() * 100
+                
+                if overall_avg >= 80:
+                    st.success("現在の学習状況は非常に良好です。このまま模擬試験などで実践的な問題にも取り組んでみましょう。")
+                elif overall_avg >= 60:
+                    st.warning("基礎はできていますが、まだ改善の余地があります。苦手分野を中心に学習を続けましょう。")
+                else:
+                    st.error("基礎的な部分から見直す必要があります。テキストを再度確認し、基本概念の理解を深めましょう。")
+        
     except Exception as e:
         st.error(f"エラーが発生しました: {str(e)}")
 else:
