@@ -90,43 +90,6 @@ st.set_page_config(
 
 st.title("応用情報技術者試験 学習分析")
 
-# サンプルデータの作成
-def generate_sample_data():
-    dates = pd.date_range(start='2023-01-01', periods=30, freq='D')
-    progress = np.cumsum(np.random.randint(1, 10, size=30))
-    return pd.DataFrame({'日付': dates, '進捗': progress})
-
-# グラフ作成関数
-def create_progress_graph(data):
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.plot(data['日付'], data['進捗'], marker='o', linestyle='-')
-    ax.set_title('学習進捗グラフ')
-    ax.set_xlabel('日付')
-    ax.set_ylabel('進捗（累積）')
-    ax.grid(True)
-    return fig
-
-# サイドバーでデータ入力方法を選択
-data_input = st.sidebar.radio(
-    "データ入力方法を選択してください：",
-    ("CSVファイルをアップロード", "サンプルデータを使用")
-)
-
-if data_input == "サンプルデータを使用":
-    data = generate_sample_data()
-    
-    # データの表示
-    st.subheader("サンプルデータ")
-    st.dataframe(data)
-    
-    # グラフの表示
-    st.subheader("サンプル進捗グラフ")
-    fig = create_progress_graph(data)
-    st.pyplot(fig)
-else:
-    # メインのCSVアップロード部分を使用
-    st.info("以下のCSVアップロード機能を使用してください。")
-
 # ファイルアップロード
 uploaded_file = st.file_uploader("CSVファイルをアップロード", type=["csv"])
 
