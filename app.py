@@ -572,37 +572,28 @@ if uploaded_file is not None:
                 })
                 st.dataframe(time_stats_df)
 
-                # グラフは日本語表示を避けて数値のみに集中
-                fig, ax = plt.subplots(figsize=(10, 6))
+                # グラフサイズを大きくする
+                fig, ax = plt.subplots(figsize=(14, 8))  # サイズを大きくする
 
-                # 分野名を番号に置き換え
-                category_numbers = [f"分野{i+1}" for i in range(len(category_time_avg))]
+                # 分野名を直接使用
                 bars = ax.bar(range(len(category_time_avg)), category_time_avg.values)
-                ax.set_ylabel('Average Response Time (minutes)')
-                ax.set_xlabel('Category Number (See table above for details)')
+                ax.set_ylabel('平均解答時間（分）', fontsize=14)  # フォントサイズを大きくする
+                ax.set_xlabel('分野', fontsize=14)  # フォントサイズを大きくする
 
-                # X軸ラベルを番号で表示
-                plt.xticks(range(len(category_time_avg)), category_numbers, rotation=45, ha='right')
+                # X軸ラベルを設定（フォントサイズを大きくして回転角度を調整）
+                plt.xticks(range(len(category_time_avg)), category_time_avg.index, rotation=45, ha='right', fontsize=12)
 
                 # 棒グラフの上に値を表示
                 for i, bar in enumerate(bars):
                     height = bar.get_height()
                     ax.text(bar.get_x() + bar.get_width()/2., height + 0.1,
                             f'{height:.1f}',
-                            ha='center', va='bottom')
+                            ha='center', va='bottom', fontsize=12)  # フォントサイズを大きくする
 
-                plt.tight_layout()
+                # 余白を調整
+                plt.tight_layout(pad=3.0)  # 余白を増やす
                 st.pyplot(fig)
 
-                # 分野番号と分野名の対応表を表示
-                st.caption("分野番号と分野名の対応表:")
-                number_mapping_df = pd.DataFrame({
-                    '分野番号': category_numbers,
-                    '分野名': category_time_avg.index,
-                    '平均解答時間（分）': [f"{val:.1f}" for val in category_time_avg.values]
-                })
-                st.dataframe(number_mapping_df)
-                
                 # 回答時間の統計情報
                 st.subheader("解答時間の統計情報")
                 col1, col2, col3 = st.columns(3)
