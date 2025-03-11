@@ -254,7 +254,32 @@ if uploaded_file is not None:
         plt.tight_layout()
         st.pyplot(fig)
         
-        # 日付ごとの平均正答率グラフの後に、解答時間グラフを移動
+        # 日付ごとの平均正答率（表）部分もそのまま
+        st.header("日付ごとの平均正答率（表）")
+        # 日付ごとのデータを表示用に整形
+        daily_data = pd.DataFrame({
+            '日付': daily_avg.index,
+            '問題数': df.groupby(date_col).size().values,
+            '平均正答率': [f"{val:.1f}%" for val in daily_avg.values],
+            '7日移動平均': [f"{val:.1f}%" for val in rolling_avg.values]
+        })
+        # 日付を見やすい形式に変換
+        daily_data['日付'] = daily_data['日付'].dt.strftime('%Y-%m-%d')
+        # 最新の日付が上に来るように並べ替え
+        daily_data = daily_data.sort_values('日付', ascending=False)
+        # 表を表示
+        st.dataframe(daily_data)
+
+        # CSVダウンロードボタンを追加
+        csv = daily_data.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="日付ごとのデータをCSVでダウンロード",
+            data=csv,
+            file_name='daily_accuracy.csv',
+            mime='text/csv',
+        )
+        
+        # ここに日付ごとの平均解答時間グラフを移動
         # 解答時間データが利用可能な場合のみ表示
         if 'time_col' in locals() and time_col is not None and '回答時間（分）' in df.columns:
             # 日付ごとの平均回答時間
@@ -288,35 +313,6 @@ if uploaded_file is not None:
                 st.pyplot(fig)
             except Exception as e:
                 st.error(f"解答時間グラフの生成中にエラーが発生しました: {str(e)}")
-        
-        # 日付ごとの平均正答率グラフの後に追加
-        st.header("日付ごとの平均正答率（表）")
-
-        # 日付ごとのデータを表示用に整形
-        daily_data = pd.DataFrame({
-            '日付': daily_avg.index,
-            '問題数': df.groupby(date_col).size().values,
-            '平均正答率': [f"{val:.1f}%" for val in daily_avg.values],
-            '7日移動平均': [f"{val:.1f}%" for val in rolling_avg.values]
-        })
-
-        # 日付を見やすい形式に変換
-        daily_data['日付'] = daily_data['日付'].dt.strftime('%Y-%m-%d')
-
-        # 最新の日付が上に来るように並べ替え
-        daily_data = daily_data.sort_values('日付', ascending=False)
-
-        # 表を表示
-        st.dataframe(daily_data)
-
-        # CSVダウンロードボタンを追加
-        csv = daily_data.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="日付ごとのデータをCSVでダウンロード",
-            data=csv,
-            file_name='daily_accuracy.csv',
-            mime='text/csv',
-        )
         
         # 分野ごとの平均正答率グラフ
         st.header("分野ごとの平均正答率")
