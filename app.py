@@ -345,6 +345,21 @@ if uploaded_file is not None:
         overall_avg = df[score_col].mean()
         st.metric("全体の平均正答率", f"{overall_avg*100:.1f}%")
 
+        # 日付ごとの平均正答率を計算
+        daily_avg = df.groupby(date_col)[score_col].mean() * 100
+
+        # 移動平均を計算（7日間）
+        rolling_avg = daily_avg.rolling(window=7, min_periods=1).mean()
+
+        # 日付ごとの平均解答時間を計算（解答時間データがある場合）
+        if '回答時間（分）' in df.columns:
+            daily_time_avg = df.groupby(date_col)['回答時間（分）'].mean()
+            # 移動平均を計算（7日間）
+            time_rolling_avg = daily_time_avg.rolling(window=7, min_periods=1).mean()
+        else:
+            daily_time_avg = None
+            time_rolling_avg = None
+
         # 学習進捗の総合評価を追加
         st.header("学習進捗の総合評価")
 
@@ -422,32 +437,9 @@ if uploaded_file is not None:
         except Exception as e:
             st.error(f"トレンド分析中にエラーが発生しました: {str(e)}")
         
-        # 日付ごとの平均正答率を計算
-        daily_avg = df.groupby(date_col)[score_col].mean() * 100
-        
-        # 移動平均を計算（7日間）
-        rolling_avg = daily_avg.rolling(window=7, min_periods=1).mean()
-        
-        # 分野ごとの平均正答率を計算
-        category_avg = df.groupby(category_col)[score_col].mean() * 100
-        
-        # グラフサイズをデバイスに応じて調整する関数
-        def get_figure_size():
-            # スマホかどうかを判定（ユーザーエージェントなどで判定できればベスト）
-            is_mobile = st.session_state.get('is_mobile', False)
-            
-            if is_mobile:
-                return (6, 4)  # スマホ用サイズ
-            else:
-                return (10, 6)  # デスクトップ用サイズ
-
-        # デバイス判定用のチェックボックス（開発用）
-        if 'is_mobile' not in st.session_state:
-            st.session_state.is_mobile = False
-
         # 日付ごとの平均正答率グラフ
         st.header("日付ごとの平均正答率")
-        fig, ax = plt.subplots(figsize=get_figure_size())
+        fig, ax = plt.subplots(figsize=(10, 6))
         ax.plot(daily_avg.index, daily_avg.values, label='Daily Accuracy')
         ax.plot(rolling_avg.index, rolling_avg.values, label='7-day Moving Average', linewidth=2)
         ax.set_ylabel('Accuracy (%)')
@@ -637,7 +629,7 @@ if uploaded_file is not None:
 
         # 分野ごとの詳細データを表示（正答率が高い順に並び替え）
         category_count = df.groupby(category_col).size()
-        category_avg_sorted = category_avg.sort_values(ascending=False)
+        category_avg_sorted = df.groupby(category_col)[score_col].mean().sort_values(ascending=False)
         category_stats = pd.DataFrame({
             '分野': category_avg_sorted.index,
             '問題数': [category_count[cat] for cat in category_avg_sorted.index],
