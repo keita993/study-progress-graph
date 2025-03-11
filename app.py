@@ -381,7 +381,7 @@ if uploaded_file is not None:
 
         # 解答時間カラムを手動で指定するオプション
         st.header("解答時間の分析")
-        use_auto_detection = st.checkbox("解答時間カラムを自動検出する", value=True)
+        use_auto_detection = True
 
         # 回答時間のカラムを特定 - 改良版
         time_col = None
