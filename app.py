@@ -637,16 +637,18 @@ if uploaded_file is not None:
                     # 移動平均を計算（7日間）
                     time_rolling_avg = daily_time_avg.rolling(window=7, min_periods=1).mean()
                     
-                    # 日付ごとの平均回答時間グラフ
+                    # 日付ごとの平均解答時間グラフの修正
                     st.markdown('<div class="subsection-title">日付ごとの平均解答時間</div>', unsafe_allow_html=True)
 
-                    # 日付ごとの平均解答時間を計算
                     try:
-                        # 日付ごとのグループ化が正しく行われているか確認
+                        # 日付ごとのグループ化
                         daily_time_avg = df.groupby(date_col)['回答時間（分）'].mean()
                         
                         # データが存在するか確認
                         if len(daily_time_avg) > 0:
+                            # 日付でソート
+                            daily_time_avg = daily_time_avg.sort_index()
+                            
                             # 移動平均を計算（7日間）
                             time_rolling_avg = daily_time_avg.rolling(window=7, min_periods=1).mean()
                             
@@ -658,14 +660,24 @@ if uploaded_file is not None:
                             ax.set_xlabel('学習日')
                             ax.legend()
                             ax.grid(True, alpha=0.3)
+                            
+                            # Y軸の範囲を調整（0から最大値の1.2倍まで）
+                            max_time = max(daily_time_avg.max(), time_rolling_avg.max())
+                            ax.set_ylim(0, max_time * 1.2)
+                            
                             plt.tight_layout()
                             st.pyplot(fig)
                             
                             # 日付ごとの解答時間データを表示
                             st.markdown('<div class="subsection-title">日付ごとの解答時間データ</div>', unsafe_allow_html=True)
+                            
+                            # 問題数のデータを取得
+                            questions_per_day = df.groupby(date_col).size()
+                            
+                            # データフレームを作成
                             time_daily_data = pd.DataFrame({
                                 '日付': daily_time_avg.index,
-                                '問題数': df.groupby(date_col).size().values,
+                                '問題数': questions_per_day.values,
                                 '平均解答時間（分）': [f"{val:.1f}" for val in daily_time_avg.values],
                                 '7日移動平均（分）': [f"{val:.1f}" for val in time_rolling_avg.values]
                             })
@@ -682,7 +694,7 @@ if uploaded_file is not None:
                             st.markdown('<div class="warning-box">解答時間のデータが十分ではありません。</div>', unsafe_allow_html=True)
                     except Exception as e:
                         st.markdown(f'<div class="error-box">解答時間グラフの生成中にエラーが発生しました: {str(e)}</div>', unsafe_allow_html=True)
-                    st.write("エラーの詳細:", e)
+                        st.write("エラーの詳細:", e)
                     
                     # 分野ごとの平均回答時間
                     category_time_avg = df.groupby(category_col)['回答時間（分）'].mean().sort_values(ascending=False)
