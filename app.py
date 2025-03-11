@@ -766,7 +766,7 @@ if uploaded_file is not None:
                         if slope_acc > 0.5:
                             st.success("👍 正答率が上昇しています。理解度が高まっています！")
                         elif slope_acc < -0.5:
-                            st.warning("�� 正答率が下降しています。基礎的な部分の復習を検討してください。")
+                            st.warning("📝 正答率が下降しています。基礎的な部分の復習を検討してください。")
                         else:
                             st.info("📚 学習は安定して進んでいます。継続的な学習を続けましょう。")
                     
