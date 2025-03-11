@@ -436,6 +436,18 @@ if uploaded_file is not None:
                     if has_time_data and len(recent_time_rolling_avg) >= 3:
                         st.write(f"移動平均の解答時間変化: {slope_time:.2f}分/日")
                         
+                        # 解答時間のトレンド評価を追加
+                        if slope_time < -0.5:
+                            st.success("解答時間は大幅に短縮されています。知識の定着が進んでいる証拠です！")
+                        elif slope_time < -0.2:
+                            st.success("解答時間は徐々に短縮されています。学習の成果が出ています。")
+                        elif slope_time > 0.5:
+                            st.warning("解答時間が大幅に増加しています。問題の難易度が上がったか、集中力が低下している可能性があります。")
+                        elif slope_time > 0.2:
+                            st.warning("解答時間がやや増加しています。問題をじっくり考えるようになったか、難易度が上がっている可能性があります。")
+                        else:
+                            st.info("解答時間は安定しています。一定のペースで解答できています。")
+                        
                         # 正答率と解答時間の相関
                         if len(recent_rolling_avg) == len(recent_time_rolling_avg):
                             corr = pd.Series(recent_rolling_avg.values).corr(pd.Series(recent_time_rolling_avg.values))
