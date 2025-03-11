@@ -122,6 +122,55 @@ h1 {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
 }
+
+/* レスポンシブデザイン用のスタイル */
+@media (max-width: 768px) {
+    /* スマホ表示時のフォントサイズ調整 */
+    h1 {
+        font-size: 1.5rem !important;
+    }
+    h2 {
+        font-size: 1.3rem !important;
+    }
+    h3 {
+        font-size: 1.1rem !important;
+    }
+    
+    /* グラフのサイズ調整 */
+    .stPlot {
+        width: 100% !important;
+        height: auto !important;
+    }
+    
+    /* データフレームの表示調整 */
+    .dataframe {
+        font-size: 0.8rem !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+    }
+    
+    /* ボタンのサイズ調整 */
+    .stButton > button {
+        width: 100% !important;
+        padding: 0.5rem !important;
+    }
+    
+    /* メトリックのサイズ調整 */
+    .stMetric {
+        font-size: 0.9rem !important;
+    }
+    
+    /* カラムレイアウトの調整 */
+    .row-widget.stHorizontal {
+        flex-direction: column !important;
+    }
+    
+    /* 余白の調整 */
+    .block-container {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -279,9 +328,23 @@ if uploaded_file is not None:
         # 分野ごとの平均正答率を計算
         category_avg = df.groupby(category_col)[score_col].mean() * 100
         
+        # グラフサイズをデバイスに応じて調整する関数
+        def get_figure_size():
+            # スマホかどうかを判定（ユーザーエージェントなどで判定できればベスト）
+            is_mobile = st.session_state.get('is_mobile', False)
+            
+            if is_mobile:
+                return (6, 4)  # スマホ用サイズ
+            else:
+                return (10, 6)  # デスクトップ用サイズ
+
+        # デバイス判定用のチェックボックス（開発用）
+        if 'is_mobile' not in st.session_state:
+            st.session_state.is_mobile = False
+
         # 日付ごとの平均正答率グラフ
         st.header("日付ごとの平均正答率")
-        fig, ax = plt.subplots(figsize=(10, 6))
+        fig, ax = plt.subplots(figsize=get_figure_size())
         ax.plot(daily_avg.index, daily_avg.values, label='Daily Accuracy')
         ax.plot(rolling_avg.index, rolling_avg.values, label='7-day Moving Average', linewidth=2)
         ax.set_ylabel('Accuracy (%)')
