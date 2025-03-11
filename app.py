@@ -281,7 +281,6 @@ if uploaded_file is not None:
             # カラム名を修正
             if column_mapping:
                 df = df.rename(columns=column_mapping)
-                st.success("カラム名を自動検出しました")
         
         # 必要なカラムを特定
         date_col = '学習日' if '学習日' in df.columns else None
@@ -593,7 +592,6 @@ if uploaded_file is not None:
             # マッピングを適用
             if category_mapping:
                 df[category_col] = df[category_col].map(lambda x: category_mapping.get(x, x))
-                st.success("分野名の文字化けを修正しました")
         
         # AI分析コメント機能
         def generate_ai_analysis(df, score_col, date_col, category_col, time_col):
@@ -797,7 +795,7 @@ if uploaded_file is not None:
                             if corr < -0.5:
                                 st.write("👉 解答時間が短くなるほど正答率が高くなる傾向があります。知識が定着してきている証拠です！")
                             elif corr > 0.5:
-                                st.write("�� 解答時間をかけるほど正答率が高くなる傾向があります。じっくり考えることで正解率が上がっています。")
+                                st.write("👉 解答時間をかけるほど正答率が高くなる傾向があります。じっくり考えることで正解率が上がっています。")
         except Exception as e:
             st.error(f"トレンド分析中にエラーが発生しました: {str(e)}")
             st.error(f"エラーの詳細: {type(e).__name__}")
