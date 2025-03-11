@@ -563,37 +563,45 @@ if uploaded_file is not None:
                 
                 # 分野ごとの平均回答時間グラフ
                 st.subheader("分野ごとの平均解答時間")
-                fig, ax = plt.subplots(figsize=(10, 6))
-                
-                # インデックスを英語に変換（文字化け対策）
-                category_time_avg_en = category_time_avg.copy()
-                category_time_avg_en.index = [map_category(cat) for cat in category_time_avg.index]
-                
-                # 英語ラベルでグラフ描画
-                bars = ax.bar(range(len(category_time_avg_en)), category_time_avg_en.values)
-                ax.set_ylabel('Average Response Time (minutes)')
-                ax.set_xlabel('Category')
-                
-                # X軸ラベルを設定（フォントサイズを小さくして回転）
-                plt.xticks(range(len(category_time_avg_en)), category_time_avg_en.index, rotation=45, ha='right', fontsize=8)
-                
-                # 棒グラフの上に値を表示
-                for i, bar in enumerate(bars):
-                    height = bar.get_height()
-                    ax.text(bar.get_x() + bar.get_width()/2., height + 0.1,
-                            f'{height:.1f}',
-                            ha='center', va='bottom', fontsize=8)
-                
-                plt.tight_layout()
-                st.pyplot(fig)
-                
-                # 分野ごとの平均解答時間を表形式でも表示
+
+                # 表形式で先に表示（文字化けしない）
                 st.subheader("分野ごとの平均解答時間（表）")
                 time_stats_df = pd.DataFrame({
                     '分野': category_time_avg.index,
                     '平均解答時間（分）': [f"{val:.1f}" for val in category_time_avg.values]
                 })
                 st.dataframe(time_stats_df)
+
+                # グラフは日本語表示を避けて数値のみに集中
+                fig, ax = plt.subplots(figsize=(10, 6))
+
+                # 分野名を番号に置き換え
+                category_numbers = [f"分野{i+1}" for i in range(len(category_time_avg))]
+                bars = ax.bar(range(len(category_time_avg)), category_time_avg.values)
+                ax.set_ylabel('Average Response Time (minutes)')
+                ax.set_xlabel('Category Number (See table above for details)')
+
+                # X軸ラベルを番号で表示
+                plt.xticks(range(len(category_time_avg)), category_numbers, rotation=45, ha='right')
+
+                # 棒グラフの上に値を表示
+                for i, bar in enumerate(bars):
+                    height = bar.get_height()
+                    ax.text(bar.get_x() + bar.get_width()/2., height + 0.1,
+                            f'{height:.1f}',
+                            ha='center', va='bottom')
+
+                plt.tight_layout()
+                st.pyplot(fig)
+
+                # 分野番号と分野名の対応表を表示
+                st.caption("分野番号と分野名の対応表:")
+                number_mapping_df = pd.DataFrame({
+                    '分野番号': category_numbers,
+                    '分野名': category_time_avg.index,
+                    '平均解答時間（分）': [f"{val:.1f}" for val in category_time_avg.values]
+                })
+                st.dataframe(number_mapping_df)
                 
                 # 回答時間の統計情報
                 st.subheader("解答時間の統計情報")
