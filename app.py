@@ -658,6 +658,8 @@ if uploaded_file is not None:
                             
                             # プロットする前にデータをチェック
                             if len(daily_time_avg) > 0 and not daily_time_avg.isnull().all():
+                                # 新しいfigとaxを作成
+                                fig, ax = plt.subplots(figsize=(10, 6))
                                 ax.plot(daily_time_avg.index, daily_time_avg.values, label='日次平均時間', marker='o')
                                 ax.plot(time_rolling_avg.index, time_rolling_avg.values, label='7日移動平均', linewidth=2)
                                 ax.set_ylabel('解答時間（分）')
@@ -671,7 +673,8 @@ if uploaded_file is not None:
                                     ax.set_ylim(0, max_time * 1.2)
                                 
                                 plt.tight_layout()
-                                st.pyplot(ax)
+                                # figオブジェクトを渡す
+                                st.pyplot(fig)
                             else:
                                 st.markdown('<div class="warning-box">有効な解答時間データがありません。</div>', unsafe_allow_html=True)
                         else:
