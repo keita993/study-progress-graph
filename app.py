@@ -254,6 +254,41 @@ if uploaded_file is not None:
         plt.tight_layout()
         st.pyplot(fig)
         
+        # 日付ごとの平均正答率グラフの後に、解答時間グラフを移動
+        # 解答時間データが利用可能な場合のみ表示
+        if 'time_col' in locals() and time_col is not None and '回答時間（分）' in df.columns:
+            # 日付ごとの平均回答時間
+            daily_time_avg = df.groupby(date_col)['回答時間（分）'].mean()
+            
+            # 移動平均を計算（7日間）
+            time_rolling_avg = daily_time_avg.rolling(window=7, min_periods=1).mean()
+            
+            # 日付ごとの平均回答時間グラフ
+            st.subheader("日付ごとの平均解答時間")
+            
+            try:
+                # 日付でソート
+                daily_time_avg = daily_time_avg.sort_index()
+                
+                # グラフ描画
+                fig, ax = plt.subplots(figsize=(10, 6))
+                ax.plot(daily_time_avg.index, daily_time_avg.values, label='Daily Average Time')
+                ax.plot(time_rolling_avg.index, time_rolling_avg.values, label='7-day Moving Average', linewidth=2)
+                ax.set_ylabel('Response Time (minutes)')
+                ax.set_xlabel('Study Date')
+                ax.legend()
+                ax.grid(True, alpha=0.3)
+                
+                # Y軸の範囲を調整
+                if not daily_time_avg.empty:
+                    max_time = max(daily_time_avg.max(), time_rolling_avg.max())
+                    ax.set_ylim(0, max_time * 1.2)
+                
+                plt.tight_layout()
+                st.pyplot(fig)
+            except Exception as e:
+                st.error(f"解答時間グラフの生成中にエラーが発生しました: {str(e)}")
+        
         # 日付ごとの平均正答率グラフの後に追加
         st.header("日付ごとの平均正答率（表）")
 
