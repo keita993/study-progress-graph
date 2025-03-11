@@ -163,6 +163,59 @@ st.markdown("""
         background-color: #1E88E5;
         color: white;
     }
+    /* 分析セクションの背景色 */
+    .section-overview {
+        background-color: #e8f5e9;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+        border-left: 5px solid #4CAF50;
+    }
+    .section-date {
+        background-color: #e3f2fd;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+        border-left: 5px solid #2196F3;
+    }
+    .section-category {
+        background-color: #f3e5f5;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+        border-left: 5px solid #9C27B0;
+    }
+    .section-time {
+        background-color: #fff8e1;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+        border-left: 5px solid #FFC107;
+    }
+    .section-ai {
+        background-color: #ffebee;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+        border-left: 5px solid #F44336;
+    }
+    
+    /* セクションタイトルのスタイル */
+    .section-title {
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    /* セクション内の小見出し */
+    .subsection-title {
+        font-size: 1.4rem;
+        font-weight: bold;
+        margin-top: 15px;
+        margin-bottom: 10px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -776,4 +829,34 @@ if uploaded_file is not None:
     except Exception as e:
         st.markdown(f'<div class="error-box">エラーが発生しました: {str(e)}</div>', unsafe_allow_html=True)
 else:
-    st.markdown('<div class="info-box">CSVファイルをアップロードしてください。</div>', unsafe_allow_html=True) 
+    st.markdown('<div class="info-box">CSVファイルをアップロードしてください。</div>', unsafe_allow_html=True)
+
+# 概要セクション
+st.markdown('<div class="section-overview">', unsafe_allow_html=True)
+st.markdown('<div class="section-title">📊 学習概要</div>', unsafe_allow_html=True)
+# 概要の内容
+st.markdown('</div>', unsafe_allow_html=True)
+
+# 日付分析セクション
+st.markdown('<div class="section-date">', unsafe_allow_html=True)
+st.markdown('<div class="section-title">📅 日付ごとの分析</div>', unsafe_allow_html=True)
+# 日付分析の内容
+st.markdown('</div>', unsafe_allow_html=True)
+
+# 分野分析セクション
+st.markdown('<div class="section-category">', unsafe_allow_html=True)
+st.markdown('<div class="section-title">🔍 分野ごとの分析</div>', unsafe_allow_html=True)
+# 分野分析の内容
+st.markdown('</div>', unsafe_allow_html=True)
+
+# 時間分析セクション
+st.markdown('<div class="section-time">', unsafe_allow_html=True)
+st.markdown('<div class="section-title">⏱️ 解答時間の分析</div>', unsafe_allow_html=True)
+# 時間分析の内容
+st.markdown('</div>', unsafe_allow_html=True)
+
+# AI分析セクション
+st.markdown('<div class="section-ai">', unsafe_allow_html=True)
+st.markdown('<div class="section-title">🤖 AI分析</div>', unsafe_allow_html=True)
+# AI分析の内容
+st.markdown('</div>', unsafe_allow_html=True) 
