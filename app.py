@@ -414,7 +414,7 @@ if uploaded_file is not None:
                         elif slope_time < -0.2:
                             st.success("👍 解答時間が短縮されています。解答スピードが向上しています！")
                         elif slope_acc < -0.5 and slope_time > 0.2:
-                            st.error("�� 正答率が下降し、解答時間も増加しています。学習方法の見直しが必要かもしれません。")
+                            st.error("📝 正答率が下降し、解答時間も増加しています。学習方法の見直しが必要かもしれません。")
                         elif slope_acc < -0.5:
                             st.warning("📝 正答率が下降しています。基礎的な部分の復習を検討してください。")
                         elif slope_time > 0.2:
@@ -428,7 +428,7 @@ if uploaded_file is not None:
                         
                         # 正答率のみで評価
                         if slope_acc > 0.5:
-                            st.success("�� 正答率が上昇しています。理解度が高まっています！")
+                            st.success("👍 正答率が上昇しています。理解度が高まっています！")
                         elif slope_acc < -0.5:
                             st.warning("📝 正答率が下降しています。基礎的な部分の復習を検討してください。")
                         else:
