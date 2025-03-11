@@ -258,7 +258,7 @@ if uploaded_file is not None:
         fig, ax = plt.subplots(figsize=(10, 6))
         category_avg_sorted = category_avg.sort_values(ascending=False)
         
-        # 分野名を英語に変換（文字化け対策）
+        # 分野名を英語に変換（文字化け対策）- 改善版
         category_mapping = {
             'セキュリティ': 'Security',
             'システムアーキテクチャ': 'System Architecture',
@@ -268,14 +268,65 @@ if uploaded_file is not None:
             '経営戦略': 'Management Strategy',
             'システム開発': 'System Development',
             '組込システム開発': 'Embedded Systems',
+            '情報システム開発': 'Information System Development',
             'データベース': 'Database',
             'ネットワーク': 'Network',
-            'システム監査': 'System Audit'
+            'システム監査': 'System Audit',
+            # 追加の分野名マッピング
+            '情報セキュリティ': 'Information Security',
+            'マネジメント': 'Management',
+            'テクノロジ': 'Technology',
+            'ストラテジ': 'Strategy',
+            'システム構成要素': 'System Components',
+            'ソフトウェア開発': 'Software Development',
+            'ハードウェア': 'Hardware',
+            'ヒューマンインタフェース': 'Human Interface',
+            'マルチメディア': 'Multimedia',
+            'データベース': 'Database',
+            'ネットワーク': 'Network',
+            'セキュリティ': 'Security',
+            'システム開発技術': 'System Development Technology',
+            'ソフトウェア開発管理技術': 'Software Development Management',
+            'プロジェクトマネジメント': 'Project Management',
+            'サービスマネジメント': 'Service Management',
+            'システム監査': 'System Audit',
+            '組込みシステム': 'Embedded Systems',
+            '経営': 'Business Management',
+            '企業と法務': 'Corporate and Legal Affairs',
+            '経営戦略': 'Management Strategy',
+            '技術戦略': 'Technology Strategy',
+            'システム戦略': 'System Strategy',
+            '開発技術': 'Development Technology',
+            'ソフトウェア開発': 'Software Development',
+            'ハードウェア': 'Hardware',
+            'データベース': 'Database',
+            'ネットワーク': 'Network',
+            'セキュリティ': 'Security',
+            'システム構築': 'System Construction',
+            'システム企画': 'System Planning',
+            'システム運用': 'System Operation',
+            'サービス提供': 'Service Provision',
+            'プロジェクト管理': 'Project Management'
         }
         
-        # インデックスを英語に変換（文字化け対策）
+        # 部分一致で分野名を検出する関数
+        def map_category(cat):
+            cat_str = str(cat)
+            # 完全一致の場合
+            if cat_str in category_mapping:
+                return category_mapping[cat_str]
+            
+            # 部分一致の場合
+            for jp_cat, en_cat in category_mapping.items():
+                if jp_cat in cat_str or cat_str in jp_cat:
+                    return en_cat
+            
+            # マッチしない場合はそのまま返す
+            return cat_str
+        
+        # インデックスを英語に変換（文字化け対策）- 改善版
         category_avg_sorted_en = category_avg_sorted.copy()
-        category_avg_sorted_en.index = [category_mapping.get(cat, str(cat)) for cat in category_avg_sorted.index]
+        category_avg_sorted_en.index = [map_category(cat) for cat in category_avg_sorted.index]
         
         # 英語ラベルでグラフ描画
         ax.bar(range(len(category_avg_sorted_en)), category_avg_sorted_en.values)
@@ -289,7 +340,7 @@ if uploaded_file is not None:
         st.caption("分野名対応表:")
         mapping_df = pd.DataFrame({
             '日本語分野名': category_avg_sorted.index,
-            '英語分野名': [category_mapping.get(cat, str(cat)) for cat in category_avg_sorted.index],
+            '英語分野名': [map_category(cat) for cat in category_avg_sorted.index],
             '正答率': [f"{val:.1f}%" for val in category_avg_sorted.values]
         })
         st.dataframe(mapping_df)
