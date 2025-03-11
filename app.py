@@ -1,9 +1,13 @@
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')  # バックエンドを明示的に設定
+# 日本語フォント設定を直接行う
+matplotlib.rcParams['font.family'] = 'sans-serif'
+matplotlib.rcParams['font.sans-serif'] = ['Arial', 'Yu Gothic', 'Hiragino Kaku Gothic ProN', 'Meiryo', 'sans-serif']
 import matplotlib.pyplot as plt
-import japanize_matplotlib
 import streamlit as st
+import os
+import urllib.request
 
 # ページ設定
 st.set_page_config(
