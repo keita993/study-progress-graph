@@ -484,9 +484,6 @@ if uploaded_file is not None:
 
         if time_col is not None:
             try:
-                # 解答時間のサンプルを表示
-                st.write(f"解答時間カラム '{time_col}' のサンプル値:", df[time_col].head().tolist())
-                
                 # 解答時間を分単位で処理
                 st.info("解答時間は「分」単位として処理します")
                 
