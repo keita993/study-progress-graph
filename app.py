@@ -82,17 +82,100 @@ import urllib.request
 import re
 import numpy as np
 
-# ページ設定
+# ページ設定を更新 - より広いレイアウトに
 st.set_page_config(
     page_title="応用情報技術者試験 学習分析",
-    page_icon="📊"
+    page_icon="📊",
+    layout="wide",  # 画面幅を広く使用
+    initial_sidebar_state="collapsed"  # サイドバーを初期状態で折りたたむ
 )
 
-st.title("応用情報技術者試験 学習分析")
+# カスタムCSS追加
+st.markdown("""
+<style>
+    .main-header {
+        font-size: 2.5rem;
+        color: #1E88E5;
+        text-align: center;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f0f2f6;
+    }
+    .sub-header {
+        font-size: 1.8rem;
+        color: #0277BD;
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid #f0f2f6;
+    }
+    .metric-container {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .info-box {
+        background-color: #e3f2fd;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin: 1rem 0;
+    }
+    .warning-box {
+        background-color: #fff8e1;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin: 1rem 0;
+    }
+    .success-box {
+        background-color: #e8f5e9;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin: 1rem 0;
+    }
+    .error-box {
+        background-color: #ffebee;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin: 1rem 0;
+    }
+    .stButton>button {
+        background-color: #1E88E5;
+        color: white;
+        font-weight: bold;
+    }
+    .stButton>button:hover {
+        background-color: #0D47A1;
+    }
+    .dataframe {
+        font-size: 0.9rem;
+    }
+    /* タブのスタイル */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 2px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        background-color: #f0f2f6;
+        border-radius: 4px 4px 0 0;
+        padding: 10px 20px;
+        font-weight: bold;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #1E88E5;
+        color: white;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-# ファイルアップロード
-uploaded_file = st.file_uploader("CSVファイルをアップロード", type=["csv"])
+# タイトルを装飾
+st.markdown('<h1 class="main-header">📊 応用情報技術者試験 学習分析</h1>', unsafe_allow_html=True)
 
+# ファイルアップロード部分を改善
+with st.container():
+    st.markdown('<div class="info-box">', unsafe_allow_html=True)
+    uploaded_file = st.file_uploader("CSVファイルをアップロード", type=["csv"])
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# 分析結果をタブで整理
 if uploaded_file is not None:
     try:
         # バイナリモードでファイルを読み込む
@@ -677,20 +760,20 @@ if uploaded_file is not None:
                 ai_comments = generate_ai_analysis(df, score_col, date_col, category_col, time_col)
                 
                 for i, comment in enumerate(ai_comments):
-                    st.info(comment)
+                    st.markdown(f'<div class="info-box">{comment}</div>', unsafe_allow_html=True)
                 
                 # 総合アドバイス
                 st.subheader("総合アドバイス")
                 overall_avg = df[score_col].mean() * 100
                 
                 if overall_avg >= 80:
-                    st.success("現在の学習状況は非常に良好です。このまま模擬試験などで実践的な問題にも取り組んでみましょう。")
+                    st.markdown('<div class="success-box">現在の学習状況は非常に良好です。このまま模擬試験などで実践的な問題にも取り組んでみましょう。</div>', unsafe_allow_html=True)
                 elif overall_avg >= 60:
-                    st.warning("基礎はできていますが、まだ改善の余地があります。苦手分野を中心に学習を続けましょう。")
+                    st.markdown('<div class="warning-box">基礎はできていますが、まだ改善の余地があります。苦手分野を中心に学習を続けましょう。</div>', unsafe_allow_html=True)
                 else:
-                    st.error("基礎的な部分から見直す必要があります。テキストを再度確認し、基本概念の理解を深めましょう。")
-        
+                    st.markdown('<div class="error-box">基礎的な部分から見直す必要があります。テキストを再度確認し、基本概念の理解を深めましょう。</div>', unsafe_allow_html=True)
+    
     except Exception as e:
-        st.error(f"エラーが発生しました: {str(e)}")
+        st.markdown(f'<div class="error-box">エラーが発生しました: {str(e)}</div>', unsafe_allow_html=True)
 else:
-    st.info("CSVファイルをアップロードしてください。") 
+    st.markdown('<div class="info-box">CSVファイルをアップロードしてください。</div>', unsafe_allow_html=True) 
