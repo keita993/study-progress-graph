@@ -1,9 +1,78 @@
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')  # バックエンドを明示的に設定
-# 日本語フォント設定を直接行う
-matplotlib.rcParams['font.family'] = 'sans-serif'
-matplotlib.rcParams['font.sans-serif'] = ['Arial', 'Yu Gothic', 'Hiragino Kaku Gothic ProN', 'Meiryo', 'sans-serif']
+
+# フォント設定を強化
+import matplotlib.font_manager as fm
+import os
+
+# フォント設定を強化する関数
+def setup_japanese_font():
+    # システムフォントを探す
+    system_fonts = []
+    
+    # Windowsの場合
+    if os.name == 'nt':
+        font_paths = [
+            r'C:\Windows\Fonts\meiryo.ttc',
+            r'C:\Windows\Fonts\msgothic.ttc',
+            r'C:\Windows\Fonts\YuGothM.ttc'
+        ]
+        for path in font_paths:
+            if os.path.exists(path):
+                system_fonts.append(path)
+    
+    # macOSの場合
+    elif os.name == 'posix' and os.uname().sysname == 'Darwin':
+        font_paths = [
+            '/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc',
+            '/System/Library/Fonts/AppleGothic.ttf',
+            '/Library/Fonts/Osaka.ttf'
+        ]
+        for path in font_paths:
+            if os.path.exists(path):
+                system_fonts.append(path)
+    
+    # Linuxの場合
+    elif os.name == 'posix':
+        font_paths = [
+            '/usr/share/fonts/truetype/fonts-japanese-gothic.ttf',
+            '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc'
+        ]
+        for path in font_paths:
+            if os.path.exists(path):
+                system_fonts.append(path)
+    
+    # システムフォントが見つかった場合は設定
+    if system_fonts:
+        for font_path in system_fonts:
+            try:
+                fm.fontManager.addfont(font_path)
+                matplotlib.rcParams['font.family'] = fm.FontProperties(fname=font_path).get_name()
+                return True
+            except:
+                continue
+    
+    # システムフォントが見つからない場合はデフォルト設定
+    matplotlib.rcParams['font.family'] = 'sans-serif'
+    matplotlib.rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans', 'Liberation Sans', 'Bitstream Vera Sans', 'sans-serif']
+    
+    return False
+
+# フォント設定を適用
+setup_japanese_font()
+
+# グラフ描画時のフォント設定を強化
+def create_figure(figsize=(10, 6)):
+    fig = plt.figure(figsize=figsize)
+    ax = fig.add_subplot(111)
+    
+    # グラフ内のフォント設定
+    plt.rcParams['axes.unicode_minus'] = False  # マイナス記号を正しく表示
+    plt.rcParams['font.size'] = 12  # フォントサイズ
+    
+    return fig, ax
+
 import matplotlib.pyplot as plt
 import streamlit as st
 import os
@@ -172,19 +241,27 @@ if uploaded_file is not None:
         
         # 日付ごとの平均正答率グラフ
         st.header("日付ごとの平均正答率")
-        fig, ax = plt.figure(figsize=(10, 6)), plt.gca()
+        fig, ax = create_figure(figsize=(10, 6))
         ax.plot(daily_avg.index, daily_avg.values, label='日次正答率')
         ax.plot(rolling_avg.index, rolling_avg.values, label='7日移動平均', linewidth=2)
         ax.set_ylabel('正答率 (%)')
         ax.set_xlabel('学習日')
         ax.legend()
         ax.grid(True, alpha=0.3)
+        plt.tight_layout()  # レイアウトを調整
         st.pyplot(fig)
         
         # 分野ごとの平均正答率グラフ
         st.header("分野ごとの平均正答率")
+        # Streamlitのbar_chartではなく、matplotlibを使用
+        fig, ax = create_figure(figsize=(10, 6))
         category_avg_sorted = category_avg.sort_values(ascending=False)
-        st.bar_chart(category_avg_sorted)
+        category_avg_sorted.plot(kind='bar', ax=ax)
+        ax.set_ylabel('正答率 (%)')
+        ax.set_xlabel('分野')
+        plt.xticks(rotation=45, ha='right')
+        plt.tight_layout()  # レイアウトを調整
+        st.pyplot(fig)
         
         # 分野ごとの問題数
         category_count = df.groupby(category_col).size().sort_values(ascending=False)
