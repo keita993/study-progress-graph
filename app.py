@@ -80,6 +80,7 @@ import streamlit as st
 import os
 import urllib.request
 import re
+import numpy as np
 
 # ページ設定
 st.set_page_config(
@@ -88,6 +89,47 @@ st.set_page_config(
 )
 
 st.title("応用情報技術者試験 学習分析")
+
+# サンプルデータの作成
+def generate_sample_data():
+    dates = pd.date_range(start='2023-01-01', periods=30, freq='D')
+    progress = np.cumsum(np.random.randint(1, 10, size=30))
+    return pd.DataFrame({'日付': dates, '進捗': progress})
+
+# グラフ作成関数
+def create_progress_graph(data):
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(data['日付'], data['進捗'], marker='o', linestyle='-')
+    ax.set_title('学習進捗グラフ')
+    ax.set_xlabel('日付')
+    ax.set_ylabel('進捗（累積）')
+    ax.grid(True)
+    return fig
+
+# サイドバーでデータ入力方法を選択
+data_input = st.sidebar.radio(
+    "データ入力方法を選択してください：",
+    ("サンプルデータを使用", "自分でデータをアップロード")
+)
+
+if data_input == "サンプルデータを使用":
+    data = generate_sample_data()
+else:
+    uploaded_file = st.sidebar.file_uploader("CSVファイルをアップロード", type=['csv'])
+    if uploaded_file is not None:
+        data = pd.read_csv(uploaded_file)
+    else:
+        st.info("CSVファイルをアップロードしてください。")
+        st.stop()
+
+# データの表示
+st.subheader("データ")
+st.dataframe(data)
+
+# グラフの表示
+st.subheader("進捗グラフ")
+fig = create_progress_graph(data)
+st.pyplot(fig)
 
 # ファイルアップロード
 uploaded_file = st.file_uploader("CSVファイルをアップロード", type=["csv"])
@@ -561,38 +603,14 @@ if uploaded_file is not None:
                 # 分野ごとの平均回答時間
                 category_time_avg = df.groupby(category_col)['回答時間（分）'].mean().sort_values(ascending=False)
                 
-                # 分野ごとの平均回答時間グラフ
+                # 分野ごとの平均回答時間を表形式で表示
                 st.subheader("分野ごとの平均解答時間")
-
-                # 表形式で先に表示（文字化けしない）
-                st.subheader("分野ごとの平均解答時間（表）")
                 time_stats_df = pd.DataFrame({
                     '分野': category_time_avg.index,
                     '平均解答時間（分）': [f"{val:.1f}" for val in category_time_avg.values]
                 })
                 st.dataframe(time_stats_df)
-
-                # グラフサイズを大きくする
-                fig, ax = plt.subplots(figsize=(14, 8))  # サイズを大きくする
-
-                # 分野名を直接使用
-                bars = ax.bar(range(len(category_time_avg)), category_time_avg.values)
-                ax.set_ylabel('平均解答時間（分）', fontsize=14)  # フォントサイズを大きくする
-                ax.set_xlabel('分野', fontsize=14)  # フォントサイズを大きくする
-
-                # X軸ラベルを設定（フォントサイズを大きくして回転角度を調整）
-                plt.xticks(range(len(category_time_avg)), category_time_avg.index, rotation=45, ha='right', fontsize=12)
-
-                # 棒グラフの上に値を表示
-                for i, (bar, height) in enumerate(zip(bars, category_time_avg.values)):
-                    ax.text(bar.get_x() + bar.get_width()/2., height + 0.1,
-                            f'{height:.1f}',
-                            ha='center', va='bottom', fontsize=12)  # フォントサイズを大きくする
-
-                # 余白を調整
-                plt.tight_layout(pad=3.0)  # 余白を増やす
-                st.pyplot(fig)
-
+                
                 # 回答時間の統計情報
                 st.subheader("解答時間の統計情報")
                 col1, col2, col3 = st.columns(3)
