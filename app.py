@@ -295,8 +295,7 @@ if uploaded_file is not None:
                 for col in df.columns:
                     if keyword in str(col):
                         time_col = col
-                        st.success(f"解答時間カラムを検出しました: {col}")
-                        break
+                    break
                 if time_col:
                     break
             
@@ -306,31 +305,25 @@ if uploaded_file is not None:
                     col_str = str(col).lower()
                     if ('分' in col_str or 'time' in col_str) and '分野' not in col_str:
                         time_col = col
-                        st.success(f"解答時間カラムを検出しました: {col}")
                         break
             
             # 回答時間のカラムが見つからない場合は位置で推測
             if time_col is None and len(df.columns) > 4:
                 time_col = df.columns[4]  # 通常5列目が回答時間
-                st.info(f"解答時間カラムを位置から推測しました: {time_col}")
         else:
             time_col = st.selectbox("解答時間カラムを選択してください", df.columns.tolist())
-            st.success(f"解答時間カラムを '{time_col}' に設定しました")
 
         if time_col is not None:
             try:
                 # 解答時間を分単位で処理
-                st.info("解答時間は「分」単位として処理します")
                 
                 # 「〜分」形式から数値を抽出
                 if df[time_col].dtype == 'object':
                     # 正規表現で数値部分を抽出
                     df['回答時間（分）'] = df[time_col].astype(str).str.extract(r'(\d+\.?\d*)')[0].astype(float)
-                    st.success(f"解答時間データを正常に抽出しました。平均: {df['回答時間（分）'].mean():.2f}分")
                 else:
                     # 数値型の場合はそのまま使用
                     df['回答時間（分）'] = df[time_col]
-                    st.success(f"解答時間データを正常に取得しました。平均: {df['回答時間（分）'].mean():.2f}分")
                 
                 # NaN値を0に置き換え
                 nan_count = df['回答時間（分）'].isna().sum()
