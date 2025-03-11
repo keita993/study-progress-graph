@@ -436,52 +436,21 @@ if uploaded_file is not None:
         else:
             st.info("解答時間のデータが見つかりませんでした。")
         
-        # 分野ごとの平均正答率グラフ部分を削除し、詳細データのみを表示
+        # 分野ごとの分析部分を修正
         st.header("分野ごとの分析")
 
-        # 分野ごとの詳細データを表示
-        category_count = df.groupby(category_col).size().sort_values(ascending=False)
-        category_stats = category_count.reset_index().rename(columns={category_col: '分野', 0: '問題数'})
-        category_percent = category_avg.reset_index()
-        category_percent['正答率'] = category_percent[score_col].map('{:.1f}%'.format)
-
-        # データフレームをマージ
-        category_stats_merged = pd.merge(
-            category_stats, 
-            category_percent[[category_col, '正答率']], 
-            left_on='分野', 
-            right_on=category_col,
-            how='left'
-        )
-
-        if category_col != '分野':
-            category_stats_merged = category_stats_merged.drop(columns=[category_col])
+        # 分野ごとの詳細データを表示（正答率が高い順に並び替え）
+        category_count = df.groupby(category_col).size()
+        category_avg_sorted = category_avg.sort_values(ascending=False)
+        category_stats = pd.DataFrame({
+            '分野': category_avg_sorted.index,
+            '問題数': [category_count[cat] for cat in category_avg_sorted.index],
+            '正答率': [f"{val:.1f}%" for val in category_avg_sorted.values]
+        })
 
         # 表を表示
-        st.dataframe(category_stats_merged)
+        st.dataframe(category_stats)
 
-        # 苦手分野と得意分野を表示
-        st.subheader("苦手分野と得意分野")
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.markdown("**苦手分野 (正答率が低い順)**")
-            worst_categories = category_avg.sort_values().head(3)
-            worst_df = pd.DataFrame({
-                '分野': worst_categories.index,
-                '正答率': [f"{val:.1f}%" for val in worst_categories.values]
-            })
-            st.dataframe(worst_df)
-
-        with col2:
-            st.markdown("**得意分野 (正答率が高い順)**")
-            best_categories = category_avg.sort_values(ascending=False).head(3)
-            best_df = pd.DataFrame({
-                '分野': best_categories.index,
-                '正答率': [f"{val:.1f}%" for val in best_categories.values]
-            })
-            st.dataframe(best_df)
-        
         # 学習の進捗状況
         st.header("学習の進捗状況")
         total_questions = len(df)
