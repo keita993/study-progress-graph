@@ -279,23 +279,110 @@ if uploaded_file is not None:
             mime='text/csv',
         )
         
-        # ここに日付ごとの平均解答時間グラフを移動
-        # 解答時間データが利用可能な場合のみ表示
-        if 'time_col' in locals() and time_col is not None and '回答時間（分）' in df.columns:
-            # 日付ごとの平均回答時間
-            daily_time_avg = df.groupby(date_col)['回答時間（分）'].mean()
+        # 解答時間の分析部分を移動する
+        # 「日付ごとの平均正答率（表）」の後に移動し、「分野ごとの平均正答率グラフ」の前に配置
+
+        # 解答時間カラムを手動で指定するオプション
+        st.header("解答時間の分析")
+        use_auto_detection = st.checkbox("解答時間カラムを自動検出する", value=True)
+
+        # 回答時間のカラムを特定 - 改良版
+        time_col = None
+        if use_auto_detection:
+            # 優先度の高いキーワードから検索
+            priority_keywords = ['解答時間', '回答時間', '時間']
+            for keyword in priority_keywords:
+                for col in df.columns:
+                    if keyword in str(col):
+                        time_col = col
+                        st.success(f"解答時間カラムを検出しました: {col}")
+                        break
+                if time_col:
+                    break
             
-            # 移動平均を計算（7日間）
-            time_rolling_avg = daily_time_avg.rolling(window=7, min_periods=1).mean()
+            # 見つからない場合は、より広い範囲で検索（ただし「分野」は除外）
+            if time_col is None:
+                for col in df.columns:
+                    col_str = str(col).lower()
+                    if ('分' in col_str or 'time' in col_str) and '分野' not in col_str:
+                        time_col = col
+                        st.success(f"解答時間カラムを検出しました: {col}")
+                        break
             
-            # 日付ごとの平均回答時間グラフ
-            st.subheader("日付ごとの平均解答時間")
-            
+            # 回答時間のカラムが見つからない場合は位置で推測
+            if time_col is None and len(df.columns) > 4:
+                time_col = df.columns[4]  # 通常5列目が回答時間
+                st.info(f"解答時間カラムを位置から推測しました: {time_col}")
+        else:
+            time_col = st.selectbox("解答時間カラムを選択してください", df.columns.tolist())
+            st.success(f"解答時間カラムを '{time_col}' に設定しました")
+
+        if time_col is not None:
             try:
-                # 日付でソート
-                daily_time_avg = daily_time_avg.sort_index()
+                # 解答時間を分単位で処理
+                st.info("解答時間は「分」単位として処理します")
                 
-                # グラフ描画
+                # 「〜分」形式から数値を抽出
+                if df[time_col].dtype == 'object':
+                    # 正規表現で数値部分を抽出
+                    df['回答時間（分）'] = df[time_col].astype(str).str.extract(r'(\d+\.?\d*)')[0].astype(float)
+                    st.success(f"解答時間データを正常に抽出しました。平均: {df['回答時間（分）'].mean():.2f}分")
+                else:
+                    # 数値型の場合はそのまま使用
+                    df['回答時間（分）'] = df[time_col]
+                    st.success(f"解答時間データを正常に取得しました。平均: {df['回答時間（分）'].mean():.2f}分")
+                
+                # NaN値を0に置き換え
+                nan_count = df['回答時間（分）'].isna().sum()
+                if nan_count > 0:
+                    st.warning(f"{nan_count}個のNaN値を0に置き換えました")
+                    df['回答時間（分）'] = df['回答時間（分）'].fillna(0)
+                
+                # 異常値の処理
+                max_time_limit = st.slider("解答時間の上限（分）", min_value=1, max_value=120, value=60, step=1)
+                outliers_count = (df['回答時間（分）'] > max_time_limit).sum()
+
+                if outliers_count > 0:
+                    # 異常値を含むデータフレームを保存
+                    df_with_outliers = df.copy()
+                    
+                    # 異常値を除外
+                    df_filtered = df[df['回答時間（分）'] <= max_time_limit].copy()
+                    
+                    st.warning(f"{outliers_count}個の異常値（{max_time_limit}分超）を除外しました")
+                    
+                    # 除外前後の統計情報を表示
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.subheader("除外前の統計")
+                        st.metric("データ数", f"{len(df_with_outliers)}個")
+                        st.metric("平均解答時間", f"{df_with_outliers['回答時間（分）'].mean():.1f}分")
+                        st.metric("最大解答時間", f"{df_with_outliers['回答時間（分）'].max():.1f}分")
+                    
+                    with col2:
+                        st.subheader("除外後の統計")
+                        st.metric("データ数", f"{len(df_filtered)}個")
+                        st.metric("平均解答時間", f"{df_filtered['回答時間（分）'].mean():.1f}分")
+                        st.metric("最大解答時間", f"{df_filtered['回答時間（分）'].max():.1f}分")
+                    
+                    # 除外したデータを表示するオプション
+                    if st.checkbox("除外したデータを表示"):
+                        excluded_data = df_with_outliers[df_with_outliers['回答時間（分）'] > max_time_limit]
+                        st.dataframe(excluded_data)
+                    
+                    # 以降の分析には除外後のデータを使用
+                    df = df_filtered
+                else:
+                    st.success(f"異常値（{max_time_limit}分超）はありませんでした")
+                
+                # 日付ごとの平均回答時間
+                daily_time_avg = df.groupby(date_col)['回答時間（分）'].mean()
+                
+                # 移動平均を計算（7日間）
+                time_rolling_avg = daily_time_avg.rolling(window=7, min_periods=1).mean()
+                
+                # 日付ごとの平均回答時間グラフ
+                st.subheader("日付ごとの平均解答時間")
                 fig, ax = plt.subplots(figsize=(10, 6))
                 ax.plot(daily_time_avg.index, daily_time_avg.values, label='Daily Average Time')
                 ax.plot(time_rolling_avg.index, time_rolling_avg.values, label='7-day Moving Average', linewidth=2)
@@ -303,16 +390,51 @@ if uploaded_file is not None:
                 ax.set_xlabel('Study Date')
                 ax.legend()
                 ax.grid(True, alpha=0.3)
-                
-                # Y軸の範囲を調整
-                if not daily_time_avg.empty:
-                    max_time = max(daily_time_avg.max(), time_rolling_avg.max())
-                    ax.set_ylim(0, max_time * 1.2)
-                
                 plt.tight_layout()
                 st.pyplot(fig)
+                
+                # 分野ごとの平均回答時間
+                category_time_avg = df.groupby(category_col)['回答時間（分）'].mean().sort_values(ascending=False)
+                
+                # 分野ごとの平均回答時間を表形式で表示
+                st.subheader("分野ごとの平均解答時間")
+                time_stats_df = pd.DataFrame({
+                    '分野': category_time_avg.index,
+                    '平均解答時間（分）': [f"{val:.1f}" for val in category_time_avg.values]
+                })
+                st.dataframe(time_stats_df)
+                
+                # 回答時間の統計情報
+                st.subheader("解答時間の統計情報")
+                col1, col2, col3 = st.columns(3)
+                
+                # 実際の値を使用
+                mean_time = df['回答時間（分）'].mean()
+                min_time = df['回答時間（分）'].min()
+                max_time = df['回答時間（分）'].max()
+                
+                with col1:
+                    st.metric("平均解答時間", f"{mean_time:.1f}分")
+                with col2:
+                    st.metric("最短解答時間", f"{min_time:.1f}分")
+                with col3:
+                    st.metric("最長解答時間", f"{max_time:.1f}分")
+                
+                # 解答時間の分布
+                st.subheader("解答時間の分布")
+                fig, ax = plt.subplots(figsize=(10, 6))
+                ax.hist(df['回答時間（分）'], bins=20, alpha=0.7)
+                ax.set_xlabel('Response Time (minutes)')
+                ax.set_ylabel('Frequency')
+                ax.grid(True, alpha=0.3)
+                plt.tight_layout()
+                st.pyplot(fig)
+                
             except Exception as e:
-                st.error(f"解答時間グラフの生成中にエラーが発生しました: {str(e)}")
+                st.error(f"回答時間の分析中にエラーが発生しました: {str(e)}")
+                st.write("エラーの詳細:", e)
+        else:
+            st.info("解答時間のデータが見つかりませんでした。")
         
         # 分野ごとの平均正答率グラフ
         st.header("分野ごとの平均正答率")
@@ -478,160 +600,6 @@ if uploaded_file is not None:
             if category_mapping:
                 df[category_col] = df[category_col].map(lambda x: category_mapping.get(x, x))
                 st.success("分野名の文字化けを修正しました")
-        
-        # 解答時間カラムを手動で指定するオプション
-        st.header("解答時間の分析")
-        use_auto_detection = st.checkbox("解答時間カラムを自動検出する", value=True)
-
-        # 回答時間のカラムを特定 - 改良版
-        time_col = None
-        if use_auto_detection:
-            # 優先度の高いキーワードから検索
-            priority_keywords = ['解答時間', '回答時間', '時間']
-            for keyword in priority_keywords:
-                for col in df.columns:
-                    if keyword in str(col):
-                        time_col = col
-                        st.success(f"解答時間カラムを検出しました: {col}")
-                        break
-                if time_col:
-                    break
-            
-            # 見つからない場合は、より広い範囲で検索（ただし「分野」は除外）
-            if time_col is None:
-                for col in df.columns:
-                    col_str = str(col).lower()
-                    if ('分' in col_str or 'time' in col_str) and '分野' not in col_str:
-                        time_col = col
-                        st.success(f"解答時間カラムを検出しました: {col}")
-                        break
-            
-            # 回答時間のカラムが見つからない場合は位置で推測
-            if time_col is None and len(df.columns) > 4:
-                time_col = df.columns[4]  # 通常5列目が回答時間
-                st.info(f"解答時間カラムを位置から推測しました: {time_col}")
-        else:
-            time_col = st.selectbox("解答時間カラムを選択してください", df.columns.tolist())
-            st.success(f"解答時間カラムを '{time_col}' に設定しました")
-
-        if time_col is not None:
-            try:
-                # 解答時間を分単位で処理
-                st.info("解答時間は「分」単位として処理します")
-                
-                # 「〜分」形式から数値を抽出
-                if df[time_col].dtype == 'object':
-                    # 正規表現で数値部分を抽出
-                    df['回答時間（分）'] = df[time_col].astype(str).str.extract(r'(\d+\.?\d*)')[0].astype(float)
-                    st.success(f"解答時間データを正常に抽出しました。平均: {df['回答時間（分）'].mean():.2f}分")
-                else:
-                    # 数値型の場合はそのまま使用
-                    df['回答時間（分）'] = df[time_col]
-                    st.success(f"解答時間データを正常に取得しました。平均: {df['回答時間（分）'].mean():.2f}分")
-                
-                # NaN値を0に置き換え
-                nan_count = df['回答時間（分）'].isna().sum()
-                if nan_count > 0:
-                    st.warning(f"{nan_count}個のNaN値を0に置き換えました")
-                    df['回答時間（分）'] = df['回答時間（分）'].fillna(0)
-                
-                # 異常値の処理
-                max_time_limit = st.slider("解答時間の上限（分）", min_value=1, max_value=120, value=60, step=1)
-                outliers_count = (df['回答時間（分）'] > max_time_limit).sum()
-
-                if outliers_count > 0:
-                    # 異常値を含むデータフレームを保存
-                    df_with_outliers = df.copy()
-                    
-                    # 異常値を除外
-                    df_filtered = df[df['回答時間（分）'] <= max_time_limit].copy()
-                    
-                    st.warning(f"{outliers_count}個の異常値（{max_time_limit}分超）を除外しました")
-                    
-                    # 除外前後の統計情報を表示
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.subheader("除外前の統計")
-                        st.metric("データ数", f"{len(df_with_outliers)}個")
-                        st.metric("平均解答時間", f"{df_with_outliers['回答時間（分）'].mean():.1f}分")
-                        st.metric("最大解答時間", f"{df_with_outliers['回答時間（分）'].max():.1f}分")
-                    
-                    with col2:
-                        st.subheader("除外後の統計")
-                        st.metric("データ数", f"{len(df_filtered)}個")
-                        st.metric("平均解答時間", f"{df_filtered['回答時間（分）'].mean():.1f}分")
-                        st.metric("最大解答時間", f"{df_filtered['回答時間（分）'].max():.1f}分")
-                    
-                    # 除外したデータを表示するオプション
-                    if st.checkbox("除外したデータを表示"):
-                        excluded_data = df_with_outliers[df_with_outliers['回答時間（分）'] > max_time_limit]
-                        st.dataframe(excluded_data)
-                    
-                    # 以降の分析には除外後のデータを使用
-                    df = df_filtered
-                else:
-                    st.success(f"異常値（{max_time_limit}分超）はありませんでした")
-                
-                # 日付ごとの平均回答時間
-                daily_time_avg = df.groupby(date_col)['回答時間（分）'].mean()
-                
-                # 移動平均を計算（7日間）
-                time_rolling_avg = daily_time_avg.rolling(window=7, min_periods=1).mean()
-                
-                # 日付ごとの平均回答時間グラフ
-                st.subheader("日付ごとの平均解答時間")
-                fig, ax = plt.subplots(figsize=(10, 6))
-                ax.plot(daily_time_avg.index, daily_time_avg.values, label='Daily Average Time')
-                ax.plot(time_rolling_avg.index, time_rolling_avg.values, label='7-day Moving Average', linewidth=2)
-                ax.set_ylabel('Response Time (minutes)')
-                ax.set_xlabel('Study Date')
-                ax.legend()
-                ax.grid(True, alpha=0.3)
-                plt.tight_layout()
-                st.pyplot(fig)
-                
-                # 分野ごとの平均回答時間
-                category_time_avg = df.groupby(category_col)['回答時間（分）'].mean().sort_values(ascending=False)
-                
-                # 分野ごとの平均回答時間を表形式で表示
-                st.subheader("分野ごとの平均解答時間")
-                time_stats_df = pd.DataFrame({
-                    '分野': category_time_avg.index,
-                    '平均解答時間（分）': [f"{val:.1f}" for val in category_time_avg.values]
-                })
-                st.dataframe(time_stats_df)
-                
-                # 回答時間の統計情報
-                st.subheader("解答時間の統計情報")
-                col1, col2, col3 = st.columns(3)
-                
-                # 実際の値を使用
-                mean_time = df['回答時間（分）'].mean()
-                min_time = df['回答時間（分）'].min()
-                max_time = df['回答時間（分）'].max()
-                
-                with col1:
-                    st.metric("平均解答時間", f"{mean_time:.1f}分")
-                with col2:
-                    st.metric("最短解答時間", f"{min_time:.1f}分")
-                with col3:
-                    st.metric("最長解答時間", f"{max_time:.1f}分")
-                
-                # 解答時間の分布
-                st.subheader("解答時間の分布")
-                fig, ax = plt.subplots(figsize=(10, 6))
-                ax.hist(df['回答時間（分）'], bins=20, alpha=0.7)
-                ax.set_xlabel('Response Time (minutes)')
-                ax.set_ylabel('Frequency')
-                ax.grid(True, alpha=0.3)
-                plt.tight_layout()
-                st.pyplot(fig)
-                
-            except Exception as e:
-                st.error(f"回答時間の分析中にエラーが発生しました: {str(e)}")
-                st.write("エラーの詳細:", e)
-        else:
-            st.info("解答時間のデータが見つかりませんでした。")
         
         # AI分析コメント機能
         def generate_ai_analysis(df, score_col, date_col, category_col, time_col):
