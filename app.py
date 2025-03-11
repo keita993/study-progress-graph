@@ -584,8 +584,7 @@ if uploaded_file is not None:
                 plt.xticks(range(len(category_time_avg)), category_time_avg.index, rotation=45, ha='right', fontsize=12)
 
                 # 棒グラフの上に値を表示
-                for i, bar in enumerate(bars):
-                    height = bar.get_height()
+                for i, (bar, height) in enumerate(zip(bars, category_time_avg.values)):
                     ax.text(bar.get_x() + bar.get_width()/2., height + 0.1,
                             f'{height:.1f}',
                             ha='center', va='bottom', fontsize=12)  # フォントサイズを大きくする
