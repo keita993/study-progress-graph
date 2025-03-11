@@ -94,8 +94,20 @@ st.markdown("""
 h1, h2, h3, h4, h5, h6 {
     border-bottom: 2px solid #000;
     width: fit-content;
-    padding-bottom: 2px;
-    margin-bottom: 1px;
+    padding-bottom: 0px;  /* パディングを0pxに減らす */
+    margin-bottom: 0px;   /* マージンを0pxに減らす */
+    line-height: 1.2;     /* 行の高さを小さくする */
+}
+
+/* 特定のヘッダーに対する追加スタイル */
+h1 {
+    margin-bottom: 20px; /* h1だけは少し余白を残す */
+}
+
+/* Streamlitのデフォルトスタイルを上書き */
+.stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4, .stMarkdown h5, .stMarkdown h6 {
+    margin-top: 0.5em !important;
+    margin-bottom: 0.3em !important;
 }
 </style>
 """, unsafe_allow_html=True)
