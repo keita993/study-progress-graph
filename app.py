@@ -222,6 +222,43 @@ if uploaded_file is not None:
         with col3:
             st.metric("1日平均問題数", f"{total_questions/study_days:.1f}問")
         
+        # 分野の文字化けを修正する部分を追加
+        if category_col in df.columns:
+            # 分野名に文字化けがある場合は修正
+            unique_categories = df[category_col].unique()
+            category_mapping = {}
+            
+            for cat in unique_categories:
+                cat_str = str(cat)
+                # 文字化けしている可能性がある場合
+                if '\\u' in repr(cat_str) or len(cat_str) <= 2:
+                    # 既知の分野名と照合
+                    known_categories = {
+                        'セキュリティ': ['セキュリティ', 'セキュ', 'セ'],
+                        'システムアーキテクチャ': ['システムアーキテクチャ', 'アーキ', 'ア'],
+                        'プロジェクトマネジメント': ['プロジェクトマネジメント', 'プロマネ', 'プ'],
+                        'サービスマネジメント': ['サービスマネジメント', 'サービス', 'サ'],
+                        'システム戦略': ['システム戦略', '戦略', '戦'],
+                        '経営戦略': ['経営戦略', '経営', '経'],
+                        'システム開発': ['システム開発', '開発', '開'],
+                        '組込システム開発': ['組込システム開発', '組込', '組'],
+                        'データベース': ['データベース', 'DB', 'デ'],
+                        'ネットワーク': ['ネットワーク', 'NW', 'ネ'],
+                        'システム監査': ['システム監査', '監査', '監']
+                    }
+                    
+                    # 文字列の類似度で最も近い分野を見つける
+                    for known_cat, aliases in known_categories.items():
+                        for alias in aliases:
+                            if alias in cat_str or cat_str in alias:
+                                category_mapping[cat] = known_cat
+                                break
+            
+            # マッピングを適用
+            if category_mapping:
+                df[category_col] = df[category_col].map(lambda x: category_mapping.get(x, x))
+                st.success("分野名の文字化けを修正しました")
+        
     except Exception as e:
         st.error(f"エラーが発生しました: {str(e)}")
 else:
