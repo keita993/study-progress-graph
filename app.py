@@ -714,26 +714,21 @@ if uploaded_file is not None:
 
         try:
             # トレンド分析のための準備
-            if len(daily_avg) >= 5 and '回答時間（分）' in df.columns:
-                # 日付でソートされたデータを使用
-                sorted_daily_avg = daily_avg.sort_index()
-                sorted_time_avg = daily_time_avg.sort_index()
+            if len(daily_avg) >= 7 and '回答時間（分）' in df.columns:
+                # 移動平均データを使用
+                # 最近のデータ（直近の移動平均）を抽出
+                recent_rolling_avg = rolling_avg.tail(7)  # 7日分の移動平均
+                recent_time_rolling_avg = time_rolling_avg.tail(7)  # 7日分の移動平均
                 
-                # 最近のデータ（直近5日分）を抽出
-                recent_accuracy = sorted_daily_avg.tail(5)
-                recent_time = sorted_time_avg.tail(5)
-                
-                # トレンドを計算（単純な線形回帰で傾きを求める）
-                
-                # 正答率のトレンド
-                if len(recent_accuracy) >= 3:
-                    x_acc = range(len(recent_accuracy))
-                    slope_acc, _, _, _, _ = stats.linregress(x_acc, recent_accuracy.values)
+                # トレンドを計算（移動平均の傾きを求める）
+                if len(recent_rolling_avg) >= 3:
+                    x_acc = range(len(recent_rolling_avg))
+                    slope_acc, _, _, _, _ = stats.linregress(x_acc, recent_rolling_avg.values)
                     
                     # 解答時間のトレンド
-                    if len(recent_time) >= 3:
-                        x_time = range(len(recent_time))
-                        slope_time, _, _, _, _ = stats.linregress(x_time, recent_time.values)
+                    if len(recent_time_rolling_avg) >= 3:
+                        x_time = range(len(recent_time_rolling_avg))
+                        slope_time, _, _, _, _ = stats.linregress(x_time, recent_time_rolling_avg.values)
                         
                         # 評価を表示
                         col1, col2 = st.columns(2)
@@ -772,12 +767,12 @@ if uploaded_file is not None:
                         
                         # 詳細な分析結果
                         with st.expander("詳細な分析結果を見る"):
-                            st.write(f"直近5日間の正答率変化: {slope_acc:.2f}%/日")
-                            st.write(f"直近5日間の解答時間変化: {slope_time:.2f}分/日")
+                            st.write(f"移動平均の正答率変化: {slope_acc:.2f}%/日")
+                            st.write(f"移動平均の解答時間変化: {slope_time:.2f}分/日")
                             
                             # 正答率と解答時間の相関
-                            if len(recent_accuracy) == len(recent_time):
-                                corr = recent_accuracy.corr(recent_time)
+                            if len(recent_rolling_avg) == len(recent_time_rolling_avg):
+                                corr = pd.Series(recent_rolling_avg.values).corr(pd.Series(recent_time_rolling_avg.values))
                                 st.write(f"正答率と解答時間の相関係数: {corr:.2f}")
                                 
                                 if corr < -0.5:
@@ -785,9 +780,9 @@ if uploaded_file is not None:
                                 elif corr > 0.5:
                                     st.write("👉 解答時間をかけるほど正答率が高くなる傾向があります。じっくり考えることで正解率が上がっています。")
                 else:
-                    st.info("トレンド分析には少なくとも3日分のデータが必要です。")
+                    st.info("トレンド分析には少なくとも3日分の移動平均データが必要です。")
             else:
-                st.info("トレンド分析には少なくとも5日分のデータと解答時間の情報が必要です。")
+                st.info("トレンド分析には少なくとも7日分のデータと解答時間の情報が必要です。")
         except Exception as e:
             st.error(f"トレンド分析中にエラーが発生しました: {str(e)}")
         
