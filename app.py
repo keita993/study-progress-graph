@@ -77,73 +77,64 @@ if uploaded_file is not None:
         if df is not None:
             # 文字化けしたカラム名を修正
             column_mapping = {}
-            for col in df.columns:
-                # バイト列に変換して文字化けパターンを検出
-                col_bytes = str(col).encode('unicode_escape')
+            
+            # カラムの位置に基づいて自動検出
+            if len(df.columns) >= 6:
+                # 典型的なCSVフォーマットの場合
+                column_positions = {
+                    0: 'No.',
+                    1: '学習日',
+                    2: '出題',
+                    3: '分野',
+                    4: '解答時間',
+                    5: '正答率',
+                    6: '回答'
+                }
                 
-                # 学習日カラムの検出
-                if b'\\u' in col_bytes and (b'w' in col_bytes or b'K' in col_bytes):
-                    column_mapping[col] = '学習日'
-                # 出題カラムの検出
-                elif b'\\u' in col_bytes and (b'o' in col_bytes or b'T' in col_bytes):
-                    column_mapping[col] = '出題'
-                # 分野カラムの検出
-                elif b'\\u' in col_bytes and len(col) <= 2:
-                    column_mapping[col] = '分野'
-                # 解答時間カラムの検出
-                elif b'\\u' in col_bytes and b'\\u' in col_bytes:
-                    column_mapping[col] = '解答時間'
-                # 正答率カラムの検出
-                elif b'\\u' in col_bytes and b'\\u' in col_bytes and any(c in str(col) for c in ['率', '％', '%']):
-                    column_mapping[col] = '正答率'
-                # 回答カラムの検出
-                elif b'\\u' in col_bytes and any(c in str(col) for c in ['答', '解']):
-                    column_mapping[col] = '回答'
+                for i, col in enumerate(df.columns):
+                    if i in column_positions:
+                        column_mapping[col] = column_positions[i]
+            
+            # 位置ベースのマッピングがない場合は内容ベースで検出
+            if not column_mapping:
+                for col in df.columns:
+                    col_str = str(col)
+                    col_bytes = col_str.encode('unicode_escape')
+                    
+                    # 学習日カラムの検出
+                    if '学習' in col_str or '日付' in col_str or '日時' in col_str or (b'\\u' in col_bytes and (b'w' in col_bytes or b'K' in col_bytes)):
+                        column_mapping[col] = '学習日'
+                    # 分野カラムの検出
+                    elif '分野' in col_str or 'カテゴリ' in col_str or '項目' in col_str or (len(col_str) <= 2 and b'\\u' in col_bytes):
+                        column_mapping[col] = '分野'
+                    # 正答率カラムの検出
+                    elif '正答率' in col_str or '正解率' in col_str or '得点率' in col_str or any(c in col_str for c in ['率', '％', '%']):
+                        column_mapping[col] = '正答率'
             
             # カラム名を修正
             if column_mapping:
                 df = df.rename(columns=column_mapping)
-                st.success("文字化けしたカラム名を修正しました")
+                st.success("カラム名を自動検出しました")
         
         # 必要なカラムを特定
-        date_col = None
-        category_col = None
-        score_col = None
+        date_col = '学習日' if '学習日' in df.columns else None
+        category_col = '分野' if '分野' in df.columns else None
+        score_col = '正答率' if '正答率' in df.columns else None
         
-        # 学習日カラムを検出
-        for col in df.columns:
-            if '学習日' in col or '日付' in col or '日時' in col:
-                date_col = col
-                break
+        # カラムが見つからない場合は位置で推測
+        if date_col is None and len(df.columns) > 1:
+            date_col = df.columns[1]  # 通常2列目が日付
         
-        # 分野カラムを検出
-        for col in df.columns:
-            if '分野' in col or 'カテゴリ' in col or '項目' in col:
-                category_col = col
-                break
+        if category_col is None and len(df.columns) > 3:
+            category_col = df.columns[3]  # 通常4列目が分野
         
-        # 正答率カラムを検出
-        for col in df.columns:
-            if '正答率' in col or '正解率' in col or '得点率' in col:
-                score_col = col
-                break
+        if score_col is None and len(df.columns) > 5:
+            score_col = df.columns[5]  # 通常6列目が正答率
         
-        # カラムが見つからない場合は選択させる
-        if date_col is None:
-            # カラム名を表示用に整形
-            display_columns = [f"{i}: {col}" for i, col in enumerate(df.columns)]
-            selected_index = st.selectbox("学習日のカラムを選択してください", options=range(len(df.columns)), format_func=lambda x: display_columns[x])
-            date_col = df.columns[selected_index]
-
-        if category_col is None:
-            display_columns = [f"{i}: {col}" for i, col in enumerate(df.columns)]
-            selected_index = st.selectbox("分野のカラムを選択してください", options=range(len(df.columns)), format_func=lambda x: display_columns[x])
-            category_col = df.columns[selected_index]
-
-        if score_col is None:
-            display_columns = [f"{i}: {col}" for i, col in enumerate(df.columns)]
-            selected_index = st.selectbox("正答率のカラムを選択してください", options=range(len(df.columns)), format_func=lambda x: display_columns[x])
-            score_col = df.columns[selected_index]
+        # それでも見つからない場合はエラー
+        if date_col is None or category_col is None or score_col is None:
+            st.error("必要なカラムを自動検出できませんでした。CSVファイルの形式を確認してください。")
+            st.stop()
         
         # 日付を日付型に変換
         try:
