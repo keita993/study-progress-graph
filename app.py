@@ -360,7 +360,9 @@ if uploaded_file is not None:
             daily_time_avg = None
             time_rolling_avg = None
 
-        # 学習進捗の総合評価セクションを修正
+        # ここで学習進捗の総合評価セクションを削除
+
+        # 他のすべての分析セクションを実行した後、ファイルの最後に学習進捗の総合評価セクションを追加
         st.header("学習進捗の総合評価")
 
         try:
