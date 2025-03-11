@@ -451,15 +451,28 @@ if uploaded_file is not None:
         st.header("解答時間の分析")
         use_auto_detection = st.checkbox("解答時間カラムを自動検出する", value=True)
 
-        # 回答時間のカラムを特定
+        # 回答時間のカラムを特定 - 改良版
         time_col = None
         if use_auto_detection:
-            for col in df.columns:
-                col_str = str(col).lower()
-                if '時間' in col_str or '解答' in col_str or 'time' in col_str or '分' in col_str:
-                    time_col = col
-                    st.success(f"解答時間カラムを検出しました: {col}")
+            # 優先度の高いキーワードから検索
+            priority_keywords = ['解答時間', '回答時間', '時間']
+            for keyword in priority_keywords:
+                for col in df.columns:
+                    if keyword in str(col):
+                        time_col = col
+                        st.success(f"解答時間カラムを検出しました: {col}")
+                        break
+                if time_col:
                     break
+            
+            # 見つからない場合は、より広い範囲で検索（ただし「分野」は除外）
+            if time_col is None:
+                for col in df.columns:
+                    col_str = str(col).lower()
+                    if ('分' in col_str or 'time' in col_str) and '分野' not in col_str:
+                        time_col = col
+                        st.success(f"解答時間カラムを検出しました: {col}")
+                        break
             
             # 回答時間のカラムが見つからない場合は位置で推測
             if time_col is None and len(df.columns) > 4:
@@ -568,11 +581,12 @@ if uploaded_file is not None:
         st.write("データ型:", df.dtypes)
         st.write("先頭5行:", df.head())
 
-        # 解答時間カラムの候補を表示
+        # 解答時間カラムの候補を表示 - 改良版
         time_col_candidates = []
         for col in df.columns:
             col_str = str(col)
-            if '時間' in col_str or '解答' in col_str or 'time' in col_str or '分' in col_str:
+            # 「分野」は除外
+            if ('時間' in col_str or '解答' in col_str or 'time' in col_str or ('分' in col_str and '分野' not in col_str)):
                 time_col_candidates.append(col)
 
         st.write("解答時間カラムの候補:", time_col_candidates)
@@ -584,6 +598,12 @@ if uploaded_file is not None:
                 st.write(f"{col}: {df[col].iloc[0]}")
             except:
                 st.write(f"{col}: 取得できません")
+        
+        if not time_col_candidates:
+            st.warning("解答時間カラムの候補が見つかりませんでした。手動で選択してください。")
+            use_auto_detection = False
+            time_col = st.selectbox("解答時間カラムを選択してください", df.columns.tolist())
+            st.success(f"解答時間カラムを '{time_col}' に設定しました")
         
     except Exception as e:
         st.error(f"エラーが発生しました: {str(e)}")
