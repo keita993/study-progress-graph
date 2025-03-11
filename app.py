@@ -662,25 +662,26 @@ if uploaded_file is not None:
             
             return comments
 
-        # AIコメント表示部分を追加
+        # AI分析コメント部分を修正
         st.header("AI分析コメント")
-        if st.button("AI分析を実行"):
-            with st.spinner("分析中..."):
-                ai_comments = generate_ai_analysis(df, score_col, date_col, category_col, time_col)
-                
-                for i, comment in enumerate(ai_comments):
-                    st.info(comment)
-                
-                # 総合アドバイス
-                st.subheader("総合アドバイス")
-                overall_avg = df[score_col].mean() * 100
-                
-                if overall_avg >= 80:
-                    st.success("現在の学習状況は非常に良好です。このまま模擬試験などで実践的な問題にも取り組んでみましょう。")
-                elif overall_avg >= 60:
-                    st.warning("基礎はできていますが、まだ改善の余地があります。苦手分野を中心に学習を続けましょう。")
-                else:
-                    st.error("基礎的な部分から見直す必要があります。テキストを再度確認し、基本概念の理解を深めましょう。")
+
+        # ボタンを削除し、自動的に分析を実行
+        with st.spinner("分析中..."):
+            ai_comments = generate_ai_analysis(df, score_col, date_col, category_col, time_col)
+            
+            for i, comment in enumerate(ai_comments):
+                st.info(comment)
+            
+            # 総合アドバイス
+            st.subheader("総合アドバイス")
+            overall_avg = df[score_col].mean() * 100
+            
+            if overall_avg >= 80:
+                st.success("現在の学習状況は非常に良好です。このまま模擬試験などで実践的な問題にも取り組んでみましょう。")
+            elif overall_avg >= 60:
+                st.warning("基礎はできていますが、まだ改善の余地があります。苦手分野を中心に学習を続けましょう。")
+            else:
+                st.error("基礎的な部分から見直す必要があります。テキストを再度確認し、基本概念の理解を深めましょう。")
         
     except Exception as e:
         st.error(f"エラーが発生しました: {str(e)}")
