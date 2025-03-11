@@ -436,96 +436,15 @@ if uploaded_file is not None:
         else:
             st.info("解答時間のデータが見つかりませんでした。")
         
-        # 分野ごとの平均正答率グラフ
-        st.header("分野ごとの平均正答率")
-        fig, ax = plt.subplots(figsize=(10, 6))
-        category_avg_sorted = category_avg.sort_values(ascending=False)
-        
-        # 分野名を英語に変換（文字化け対策）- 改善版
-        category_mapping = {
-            'セキュリティ': 'Security',
-            'システムアーキテクチャ': 'System Architecture',
-            'プロジェクトマネジメント': 'Project Management',
-            'サービスマネジメント': 'Service Management',
-            'システム戦略': 'System Strategy',
-            '経営戦略': 'Management Strategy',
-            'システム開発': 'System Development',
-            '組込システム開発': 'Embedded Systems',
-            '情報システム開発': 'Information System Development',
-            'データベース': 'Database',
-            'ネットワーク': 'Network',
-            'システム監査': 'System Audit',
-            # 追加の分野名マッピング
-            '情報セキュリティ': 'Information Security',
-            'マネジメント': 'Management',
-            'テクノロジ': 'Technology',
-            'ストラテジ': 'Strategy',
-            'システム構成要素': 'System Components',
-            'ソフトウェア開発': 'Software Development',
-            'ハードウェア': 'Hardware',
-            'ヒューマンインタフェース': 'Human Interface',
-            'マルチメディア': 'Multimedia',
-            'データベース': 'Database',
-            'ネットワーク': 'Network',
-            'セキュリティ': 'Security',
-            'システム開発技術': 'System Development Technology',
-            'ソフトウェア開発管理技術': 'Software Development Management',
-            'プロジェクトマネジメント': 'Project Management',
-            'サービスマネジメント': 'Service Management',
-            'システム監査': 'System Audit',
-            '組込みシステム': 'Embedded Systems',
-            '経営': 'Business Management',
-            '企業と法務': 'Corporate and Legal Affairs',
-            '経営戦略': 'Management Strategy',
-            '技術戦略': 'Technology Strategy',
-            'システム戦略': 'System Strategy',
-            '開発技術': 'Development Technology',
-            'ソフトウェア開発': 'Software Development',
-            'ハードウェア': 'Hardware',
-            'データベース': 'Database',
-            'ネットワーク': 'Network',
-            'セキュリティ': 'Security',
-            'システム構築': 'System Construction',
-            'システム企画': 'System Planning',
-            'システム運用': 'System Operation',
-            'サービス提供': 'Service Provision',
-            'プロジェクト管理': 'Project Management'
-        }
-        
-        # 部分一致で分野名を検出する関数
-        def map_category(cat):
-            cat_str = str(cat)
-            # 完全一致の場合
-            if cat_str in category_mapping:
-                return category_mapping[cat_str]
-            
-            # 部分一致の場合
-            for jp_cat, en_cat in category_mapping.items():
-                if jp_cat in cat_str or cat_str in jp_cat:
-                    return en_cat
-            
-            # マッチしない場合はそのまま返す
-            return cat_str
-        
-        # インデックスを英語に変換（文字化け対策）- 改善版
-        category_avg_sorted_en = category_avg_sorted.copy()
-        category_avg_sorted_en.index = [map_category(cat) for cat in category_avg_sorted.index]
-        
-        # 英語ラベルでグラフ描画
-        ax.bar(range(len(category_avg_sorted_en)), category_avg_sorted_en.values)
-        ax.set_ylabel('Accuracy (%)')
-        ax.set_xlabel('Category')
-        plt.xticks(range(len(category_avg_sorted_en)), category_avg_sorted_en.index, rotation=45, ha='right')
-        plt.tight_layout()
-        st.pyplot(fig)
-        
-        # 分野ごとの問題数と正答率を統合した表を表示
-        st.subheader("分野ごとの詳細データ")
+        # 分野ごとの平均正答率グラフ部分を削除し、詳細データのみを表示
+        st.header("分野ごとの分析")
+
+        # 分野ごとの詳細データを表示
         category_count = df.groupby(category_col).size().sort_values(ascending=False)
         category_stats = category_count.reset_index().rename(columns={category_col: '分野', 0: '問題数'})
         category_percent = category_avg.reset_index()
         category_percent['正答率'] = category_percent[score_col].map('{:.1f}%'.format)
-        
+
         # データフレームをマージ
         category_stats_merged = pd.merge(
             category_stats, 
@@ -534,11 +453,34 @@ if uploaded_file is not None:
             right_on=category_col,
             how='left'
         )
-        
+
         if category_col != '分野':
             category_stats_merged = category_stats_merged.drop(columns=[category_col])
-        
+
+        # 表を表示
         st.dataframe(category_stats_merged)
+
+        # 苦手分野と得意分野を表示
+        st.subheader("苦手分野と得意分野")
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("**苦手分野 (正答率が低い順)**")
+            worst_categories = category_avg.sort_values().head(3)
+            worst_df = pd.DataFrame({
+                '分野': worst_categories.index,
+                '正答率': [f"{val:.1f}%" for val in worst_categories.values]
+            })
+            st.dataframe(worst_df)
+
+        with col2:
+            st.markdown("**得意分野 (正答率が高い順)**")
+            best_categories = category_avg.sort_values(ascending=False).head(3)
+            best_df = pd.DataFrame({
+                '分野': best_categories.index,
+                '正答率': [f"{val:.1f}%" for val in best_categories.values]
+            })
+            st.dataframe(best_df)
         
         # 学習の進捗状況
         st.header("学習の進捗状況")
