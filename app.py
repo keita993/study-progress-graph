@@ -88,25 +88,8 @@ import sys
 try:
     from scipy import stats
 except ImportError:
-    # 代替実装を提供
-    class StatsReplacement:
-        def __init__(self):
-            pass
-        
-        def linregress(self, x, y):
-            # 簡易的な線形回帰の実装
-            n = len(x)
-            if n != len(y) or n < 2:
-                return 0, 0, 0, 0, 0
-            mean_x = sum(x) / n
-            mean_y = sum(y) / n
-            ss_xy = sum((x[i] - mean_x) * (y[i] - mean_y) for i in range(n))
-            ss_xx = sum((x[i] - mean_x) ** 2 for i in range(n))
-            slope = ss_xy / ss_xx if ss_xx != 0 else 0
-            return slope, 0, 0, 0, 0
-    
-    stats = StatsReplacement()
-    # エラーメッセージは表示しない
+    st.error("scipyモジュールがインストールされていません。requirements.txtに'scipy'を追加してください。")
+    st.stop()
 
 # ページ設定
 st.set_page_config(
