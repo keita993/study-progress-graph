@@ -407,7 +407,7 @@ if uploaded_file is not None:
                     
                     # 総合評価（解答時間データがある場合）
                     if slope_acc > 0.5 and slope_time < -0.2:
-                        st.success("�� 正答率が上昇し、解答時間も短縮されています！学習がとても効果的に進んでいます！")
+                        st.success("👍 正答率が上昇し、解答時間も短縮されています！学習がとても効果的に進んでいます！")
                     elif slope_acc > 0.5:
                         st.success("👍 正答率が上昇しています。理解度が高まっています！")
                     elif slope_time < -0.2:
@@ -450,6 +450,57 @@ if uploaded_file is not None:
         except Exception as e:
             st.error(f"トレンド分析中にエラーが発生しました: {str(e)}")
             st.error(f"エラーの詳細: {type(e).__name__}")
+        
+        # 解答率の移動平均トレンド分析を追加
+        st.subheader("解答率の推移と傾向分析")
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        # 日付ごとの平均正答率を表示
+        ax.plot(daily_avg.index, daily_avg.values, label='日別平均正答率', alpha=0.7)
+        ax.plot(rolling_avg.index, rolling_avg.values, label='7日移動平均', linewidth=2)
+
+        # トレンドライン（線形回帰）を追加
+        if len(rolling_avg) >= 3:
+            x = range(len(rolling_avg))
+            y = rolling_avg.values
+            slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
+            trend_line = slope * np.array(x) + intercept
+            ax.plot(rolling_avg.index, trend_line, 'r--', label=f'トレンド (傾き: {slope:.2f}%/日)')
+            
+            # トレンドの解釈
+            if slope > 0.5:
+                st.success("📈 正答率は上昇傾向にあります。学習の成果が出ています！")
+            elif slope < -0.5:
+                st.warning("📉 正答率は下降傾向にあります。基礎的な部分の復習を検討してください。")
+            else:
+                st.info("📊 正答率は安定しています。一定のペースで学習が進んでいます。")
+
+        ax.set_xlabel('日付')
+        ax.set_ylabel('正答率 (%)')
+        ax.grid(True, alpha=0.3)
+        ax.legend()
+        plt.tight_layout()
+        st.pyplot(fig)
+
+        # 解答率の変動分析
+        st.subheader("正答率の変動分析")
+        acc_std = df.groupby(date_col)[score_col].std().dropna() * 100
+
+        if len(acc_std) > 0:
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.bar(acc_std.index, acc_std.values, alpha=0.7, color='skyblue')
+            ax.set_xlabel('日付')
+            ax.set_ylabel('正答率の標準偏差 (%)')
+            ax.grid(True, alpha=0.3)
+            plt.tight_layout()
+            st.pyplot(fig)
+            
+            # 変動の解釈
+            avg_std = acc_std.mean()
+            if avg_std > 20:
+                st.warning(f"正答率のばらつきが大きい（平均標準偏差: {avg_std:.1f}%）です。問題の難易度にムラがあるか、知識の定着にムラがある可能性があります。")
+            else:
+                st.success(f"正答率のばらつきは安定しています（平均標準偏差: {avg_std:.1f}%）。知識が均等に定着しています。")
         
         # 日付ごとの平均正答率グラフ
         st.header("日付ごとの平均正答率")
