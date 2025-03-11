@@ -84,12 +84,37 @@ import numpy as np
 import subprocess
 import sys
 
-# scipyがインストールされているか確認し、なければインストール
+# scipyのインポート部分を修正
 try:
-    import scipy
+    from scipy import stats
 except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "scipy"])
-    import scipy
+    import sys
+    import subprocess
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "scipy"])
+        from scipy import stats
+    except Exception as e:
+        st.error(f"scipyのインストールに失敗しました: {e}")
+        st.error("トレンド分析を行うにはscipyモジュールが必要です。手動でインストールしてください。")
+        # 代替処理を提供
+        def linregress(x, y):
+            # 簡易的な線形回帰の実装
+            n = len(x)
+            if n != len(y) or n < 2:
+                return 0, 0, 0, 0, 0
+            mean_x = sum(x) / n
+            mean_y = sum(y) / n
+            ss_xy = sum((x[i] - mean_x) * (y[i] - mean_y) for i in range(n))
+            ss_xx = sum((x[i] - mean_x) ** 2 for i in range(n))
+            slope = ss_xy / ss_xx if ss_xx != 0 else 0
+            return slope, 0, 0, 0, 0
+        
+        # statsモジュールの代替を提供
+        class StatsReplacement:
+            def __init__(self):
+                self.linregress = linregress
+        
+        stats = StatsReplacement()
 
 # ページ設定
 st.set_page_config(
@@ -707,7 +732,6 @@ if uploaded_file is not None:
                 recent_time = sorted_time_avg.tail(5)
                 
                 # トレンドを計算（単純な線形回帰で傾きを求める）
-                from scipy import stats
                 
                 # 正答率のトレンド
                 if len(recent_accuracy) >= 3:
