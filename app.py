@@ -570,12 +570,30 @@ if uploaded_file is not None:
                 category_time_avg_en.index = [map_category(cat) for cat in category_time_avg.index]
                 
                 # 英語ラベルでグラフ描画
-                ax.bar(range(len(category_time_avg_en)), category_time_avg_en.values)
+                bars = ax.bar(range(len(category_time_avg_en)), category_time_avg_en.values)
                 ax.set_ylabel('Average Response Time (minutes)')
                 ax.set_xlabel('Category')
-                plt.xticks(range(len(category_time_avg_en)), category_time_avg_en.index, rotation=45, ha='right')
+                
+                # X軸ラベルを設定（フォントサイズを小さくして回転）
+                plt.xticks(range(len(category_time_avg_en)), category_time_avg_en.index, rotation=45, ha='right', fontsize=8)
+                
+                # 棒グラフの上に値を表示
+                for i, bar in enumerate(bars):
+                    height = bar.get_height()
+                    ax.text(bar.get_x() + bar.get_width()/2., height + 0.1,
+                            f'{height:.1f}',
+                            ha='center', va='bottom', fontsize=8)
+                
                 plt.tight_layout()
                 st.pyplot(fig)
+                
+                # 分野ごとの平均解答時間を表形式でも表示
+                st.subheader("分野ごとの平均解答時間（表）")
+                time_stats_df = pd.DataFrame({
+                    '分野': category_time_avg.index,
+                    '平均解答時間（分）': [f"{val:.1f}" for val in category_time_avg.values]
+                })
+                st.dataframe(time_stats_df)
                 
                 # 回答時間の統計情報
                 st.subheader("解答時間の統計情報")
