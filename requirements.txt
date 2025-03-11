@@ -2,4 +2,3 @@ streamlit
 pandas
 matplotlib
 chardet
-japanize_matplotlib

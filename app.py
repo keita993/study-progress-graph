@@ -2,8 +2,8 @@ import pandas as pd
 import matplotlib
 matplotlib.use('Agg')  # バックエンドを明示的に設定
 
-# 日本語フォント設定を簡素化
-import japanize_matplotlib  # 日本語対応の簡単な方法
+# 日本語フォント設定
+matplotlib.rcParams['font.family'] = 'IPAGothic'  # Streamlit Cloudで利用可能な日本語フォント
 
 import matplotlib.font_manager as fm
 import os
@@ -244,10 +244,10 @@ if uploaded_file is not None:
         # 日付ごとの平均正答率グラフ
         st.header("日付ごとの平均正答率")
         fig, ax = plt.subplots(figsize=(10, 6))
-        ax.plot(daily_avg.index, daily_avg.values, label='日次正答率')
-        ax.plot(rolling_avg.index, rolling_avg.values, label='7日移動平均', linewidth=2)
-        ax.set_ylabel('正答率 (%)')
-        ax.set_xlabel('学習日')
+        ax.plot(daily_avg.index, daily_avg.values, label='Daily Accuracy')
+        ax.plot(rolling_avg.index, rolling_avg.values, label='7-day Moving Average', linewidth=2)
+        ax.set_ylabel('Accuracy (%)')
+        ax.set_xlabel('Study Date')
         ax.legend()
         ax.grid(True, alpha=0.3)
         plt.tight_layout()
@@ -257,9 +257,29 @@ if uploaded_file is not None:
         st.header("分野ごとの平均正答率")
         fig, ax = plt.subplots(figsize=(10, 6))
         category_avg_sorted = category_avg.sort_values(ascending=False)
+        
+        # 分野名を英語に変換（オプション）
+        category_mapping = {
+            'セキュリティ': 'Security',
+            'システムアーキテクチャ': 'System Architecture',
+            'プロジェクトマネジメント': 'Project Management',
+            'サービスマネジメント': 'Service Management',
+            'システム戦略': 'System Strategy',
+            '経営戦略': 'Management Strategy',
+            'システム開発': 'System Development',
+            '組込システム開発': 'Embedded Systems',
+            'データベース': 'Database',
+            'ネットワーク': 'Network',
+            'システム監査': 'System Audit'
+        }
+        
+        # インデックスを英語に変換（オプション）
+        if False:  # 必要に応じてTrueに変更
+            category_avg_sorted.index = [category_mapping.get(cat, cat) for cat in category_avg_sorted.index]
+        
         ax.bar(category_avg_sorted.index, category_avg_sorted.values)
-        ax.set_ylabel('正答率 (%)')
-        ax.set_xlabel('分野')
+        ax.set_ylabel('Accuracy (%)')
+        ax.set_xlabel('Category')
         plt.xticks(rotation=45, ha='right')
         plt.tight_layout()
         st.pyplot(fig)
