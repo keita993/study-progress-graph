@@ -519,22 +519,11 @@ if uploaded_file is not None:
         plt.tight_layout()
         st.pyplot(fig)
         
-        # 元の日本語名と英語名の対応表を表示
-        st.caption("分野名対応表:")
-        mapping_df = pd.DataFrame({
-            '日本語分野名': category_avg_sorted.index,
-            '英語分野名': [map_category(cat) for cat in category_avg_sorted.index],
-            '正答率': [f"{val:.1f}%" for val in category_avg_sorted.values]
-        })
-        st.dataframe(mapping_df)
-        
-        # 分野ごとの問題数
+        # 分野ごとの問題数と正答率を統合した表を表示
+        st.subheader("分野ごとの詳細データ")
         category_count = df.groupby(category_col).size().sort_values(ascending=False)
-        
-        # 分野ごとの問題数と正答率表示
-        st.header("分野ごとの問題数と正答率")
         category_stats = category_count.reset_index().rename(columns={category_col: '分野', 0: '問題数'})
-        category_percent = category_avg_sorted.reset_index()
+        category_percent = category_avg.reset_index()
         category_percent['正答率'] = category_percent[score_col].map('{:.1f}%'.format)
         
         # データフレームをマージ
