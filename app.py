@@ -447,93 +447,15 @@ if uploaded_file is not None:
                 df[category_col] = df[category_col].map(lambda x: category_mapping.get(x, x))
                 st.success("分野名の文字化けを修正しました")
         
-        # 回答時間のグラフを追加
-        st.header("回答時間の分析")
-
-        # 回答時間のカラムを特定
-        time_col = '解答時間' if '解答時間' in df.columns else None
-
-        # 回答時間のカラムが見つからない場合は位置で推測
-        if time_col is None and len(df.columns) > 4:
-            time_col = df.columns[4]  # 通常5列目が回答時間
-
+        # 回答時間の分析部分を削除
         if time_col is not None:
             try:
-                # 回答時間を数値型に変換（秒単位）
-                if df[time_col].dtype == 'object':
-                    # 「分:秒」形式の場合は秒に変換
-                    if ':' in str(df[time_col].iloc[0]):
-                        df['回答時間（秒）'] = df[time_col].apply(lambda x: 
-                            sum(int(i) * 60 ** (len(x.split(':')) - 1 - j) 
-                                for j, i in enumerate(x.split(':')))
-                            if isinstance(x, str) and ':' in x else x)
-                    else:
-                        # 単位が秒の場合はそのまま変換
-                        df['回答時間（秒）'] = pd.to_numeric(df[time_col], errors='coerce')
-                else:
-                    df['回答時間（秒）'] = df[time_col]
-                
-                # 日付ごとの平均回答時間
-                daily_time_avg = df.groupby(date_col)['回答時間（秒）'].mean()
-                
-                # 移動平均を計算（7日間）
-                time_rolling_avg = daily_time_avg.rolling(window=7, min_periods=1).mean()
-                
-                # 日付ごとの平均回答時間グラフ
-                fig, ax = plt.subplots(figsize=(10, 6))
-                ax.plot(daily_time_avg.index, daily_time_avg.values, label='Daily Average Time')
-                ax.plot(time_rolling_avg.index, time_rolling_avg.values, label='7-day Moving Average', linewidth=2)
-                ax.set_ylabel('Response Time (seconds)')
-                ax.set_xlabel('Study Date')
-                ax.legend()
-                ax.grid(True, alpha=0.3)
-                plt.tight_layout()
-                st.pyplot(fig)
-                
-                # 分野ごとの平均回答時間
-                category_time_avg = df.groupby(category_col)['回答時間（秒）'].mean().sort_values(ascending=False)
-                
-                # 分野ごとの平均回答時間グラフ
-                fig, ax = plt.subplots(figsize=(10, 6))
-                
-                # インデックスを英語に変換（文字化け対策）
-                category_time_avg_en = category_time_avg.copy()
-                category_time_avg_en.index = [map_category(cat) for cat in category_time_avg.index]
-                
-                # 英語ラベルでグラフ描画
-                ax.bar(range(len(category_time_avg_en)), category_time_avg_en.values)
-                ax.set_ylabel('Average Response Time (seconds)')
-                ax.set_xlabel('Category')
-                plt.xticks(range(len(category_time_avg_en)), category_time_avg_en.index, rotation=45, ha='right')
-                plt.tight_layout()
-                st.pyplot(fig)
-                
-                # 回答時間と正答率の相関
-                st.header("回答時間と正答率の関係")
-                
-                # 散布図
-                fig, ax = plt.subplots(figsize=(10, 6))
-                ax.scatter(df['回答時間（秒）'], df[score_col] * 100, alpha=0.5)
-                ax.set_xlabel('Response Time (seconds)')
-                ax.set_ylabel('Accuracy (%)')
-                ax.grid(True, alpha=0.3)
-                plt.tight_layout()
-                st.pyplot(fig)
-                
-                # 回答時間の統計情報
-                st.subheader("回答時間の統計情報")
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("平均回答時間", f"{df['回答時間（秒）'].mean():.1f}秒")
-                with col2:
-                    st.metric("最短回答時間", f"{df['回答時間（秒）'].min():.1f}秒")
-                with col3:
-                    st.metric("最長回答時間", f"{df['回答時間（秒）'].max():.1f}秒")
-                
+                # 解答時間の機能は無効化
+                st.info("解答時間の分析機能は現在無効化されています。")
             except Exception as e:
-                st.error(f"回答時間の分析中にエラーが発生しました: {str(e)}")
+                st.error(f"エラーが発生しました: {str(e)}")
         else:
-            st.info("回答時間のデータが見つかりませんでした。")
+            st.info("解答時間のデータが見つかりませんでした。")
         
     except Exception as e:
         st.error(f"エラーが発生しました: {str(e)}")
