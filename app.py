@@ -88,26 +88,40 @@ st.set_page_config(
     page_icon="📊"
 )
 
-# カスタムCSSを追加
+# カスタムCSSをさらに調整
 st.markdown("""
 <style>
 h1, h2, h3, h4, h5, h6 {
-    border-bottom: 2px solid #000;
+    border-bottom: none;  /* 通常のボーダーを削除 */
     width: fit-content;
-    padding-bottom: 0px;  /* パディングを0pxに減らす */
-    margin-bottom: 0px;   /* マージンを0pxに減らす */
-    line-height: 1.2;     /* 行の高さを小さくする */
+    padding-bottom: 0;
+    margin-bottom: 0;
+    line-height: 1;
+    display: inline-block;
+    position: relative;  /* 疑似要素の配置のため */
 }
 
-/* 特定のヘッダーに対する追加スタイル */
+/* 下線を疑似要素で追加 */
+h1::after, h2::after, h3::after, h4::after, h5::after, h6::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;  /* テキストの真下に配置 */
+    width: 100%;
+    height: 2px;
+    background-color: #000;
+}
+
+/* h1のみ余白を追加 */
 h1 {
-    margin-bottom: 20px; /* h1だけは少し余白を残す */
+    margin-bottom: 15px;
+    line-height: 1.2;
 }
 
 /* Streamlitのデフォルトスタイルを上書き */
 .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4, .stMarkdown h5, .stMarkdown h6 {
-    margin-top: 0.5em !important;
-    margin-bottom: 0.3em !important;
+    margin-top: 0.3em !important;
+    margin-bottom: 0.2em !important;
 }
 </style>
 """, unsafe_allow_html=True)
