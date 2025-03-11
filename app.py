@@ -109,27 +109,23 @@ def create_progress_graph(data):
 # サイドバーでデータ入力方法を選択
 data_input = st.sidebar.radio(
     "データ入力方法を選択してください：",
-    ("サンプルデータを使用", "自分でデータをアップロード")
+    ("CSVファイルをアップロード", "サンプルデータを使用")
 )
 
 if data_input == "サンプルデータを使用":
     data = generate_sample_data()
+    
+    # データの表示
+    st.subheader("サンプルデータ")
+    st.dataframe(data)
+    
+    # グラフの表示
+    st.subheader("サンプル進捗グラフ")
+    fig = create_progress_graph(data)
+    st.pyplot(fig)
 else:
-    uploaded_file = st.sidebar.file_uploader("CSVファイルをアップロード", type=['csv'])
-    if uploaded_file is not None:
-        data = pd.read_csv(uploaded_file)
-    else:
-        st.info("CSVファイルをアップロードしてください。")
-        st.stop()
-
-# データの表示
-st.subheader("データ")
-st.dataframe(data)
-
-# グラフの表示
-st.subheader("進捗グラフ")
-fig = create_progress_graph(data)
-st.pyplot(fig)
+    # メインのCSVアップロード部分を使用
+    st.info("以下のCSVアップロード機能を使用してください。")
 
 # ファイルアップロード
 uploaded_file = st.file_uploader("CSVファイルをアップロード", type=["csv"])
