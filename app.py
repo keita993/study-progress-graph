@@ -448,59 +448,50 @@ if uploaded_file is not None:
                 st.success("分野名の文字化けを修正しました")
         
         # 解答時間カラムを手動で指定するオプション
-        st.header("解答時間カラムの設定")
-        use_auto_detection = st.checkbox("解答時間カラムを自動検出する", value=True)
-
-        if not use_auto_detection:
-            time_col = st.selectbox("解答時間カラムを選択してください", df.columns.tolist())
-            st.success(f"解答時間カラムを '{time_col}' に設定しました")
-        else:
-            # 解答時間を分単位で処理
-            st.info("解答時間は「分」単位として処理します")
-
-            try:
-                # 実際のデータを使用
-                if df[time_col].dtype == 'object':
-                    # 文字列から数値を抽出
-                    df['回答時間（分）'] = df[time_col].astype(str).str.extract(r'(\d+\.?\d*)')[0].astype(float)
-                else:
-                    # 数値型の場合はそのまま使用
-                    df['回答時間（分）'] = df[time_col]
-                
-                # NaN値を0に置き換え
-                df['回答時間（分）'] = df['回答時間（分）'].fillna(0)
-                
-                st.success(f"解答時間データを正常に取得しました。平均: {df['回答時間（分）'].mean():.2f}分")
-            except Exception as e:
-                st.error(f"解答時間データの取得に失敗しました: {str(e)}")
-                # 固定値を使用
-                df['回答時間（分）'] = 1.0
-                st.warning("固定値（1.0分）を使用します")
-
-        # 回答時間の分析部分
         st.header("解答時間の分析")
+        use_auto_detection = st.checkbox("解答時間カラムを自動検出する", value=True)
 
         # 回答時間のカラムを特定
         time_col = None
-        for col in df.columns:
-            col_str = str(col).lower()
-            if '時間' in col_str or '解答' in col_str or 'time' in col_str or '分' in col_str:
-                time_col = col
-                st.success(f"解答時間カラムを検出しました: {col}")
-                break
-
-        # 回答時間のカラムが見つからない場合は位置で推測
-        if time_col is None and len(df.columns) > 4:
-            time_col = df.columns[4]  # 通常5列目が回答時間
-            st.info(f"解答時間カラムを位置から推測しました: {time_col}")
+        if use_auto_detection:
+            for col in df.columns:
+                col_str = str(col).lower()
+                if '時間' in col_str or '解答' in col_str or 'time' in col_str or '分' in col_str:
+                    time_col = col
+                    st.success(f"解答時間カラムを検出しました: {col}")
+                    break
+            
+            # 回答時間のカラムが見つからない場合は位置で推測
+            if time_col is None and len(df.columns) > 4:
+                time_col = df.columns[4]  # 通常5列目が回答時間
+                st.info(f"解答時間カラムを位置から推測しました: {time_col}")
+        else:
+            time_col = st.selectbox("解答時間カラムを選択してください", df.columns.tolist())
+            st.success(f"解答時間カラムを '{time_col}' に設定しました")
 
         if time_col is not None:
             try:
-                # 解答時間を分単位で処理（簡略化版）
+                # 解答時間のサンプルを表示
+                st.write(f"解答時間カラム '{time_col}' のサンプル値:", df[time_col].head().tolist())
+                
+                # 解答時間を分単位で処理
                 st.info("解答時間は「分」単位として処理します")
                 
-                # 固定値を設定（デバッグ用）
-                df['回答時間（分）'] = 1.0  # すべての行に1分を設定
+                # 「〜分」形式から数値を抽出
+                if df[time_col].dtype == 'object':
+                    # 正規表現で数値部分を抽出
+                    df['回答時間（分）'] = df[time_col].astype(str).str.extract(r'(\d+\.?\d*)')[0].astype(float)
+                    st.success(f"解答時間データを正常に抽出しました。平均: {df['回答時間（分）'].mean():.2f}分")
+                else:
+                    # 数値型の場合はそのまま使用
+                    df['回答時間（分）'] = df[time_col]
+                    st.success(f"解答時間データを正常に取得しました。平均: {df['回答時間（分）'].mean():.2f}分")
+                
+                # NaN値を0に置き換え
+                nan_count = df['回答時間（分）'].isna().sum()
+                if nan_count > 0:
+                    st.warning(f"{nan_count}個のNaN値を0に置き換えました")
+                    df['回答時間（分）'] = df['回答時間（分）'].fillna(0)
                 
                 # 日付ごとの平均回答時間
                 daily_time_avg = df.groupby(date_col)['回答時間（分）'].mean()
@@ -542,15 +533,32 @@ if uploaded_file is not None:
                 # 回答時間の統計情報
                 st.subheader("解答時間の統計情報")
                 col1, col2, col3 = st.columns(3)
+                
+                # 実際の値を使用
+                mean_time = df['回答時間（分）'].mean()
+                min_time = df['回答時間（分）'].min()
+                max_time = df['回答時間（分）'].max()
+                
                 with col1:
-                    st.metric("平均解答時間", f"{1.0}分")
+                    st.metric("平均解答時間", f"{mean_time:.1f}分")
                 with col2:
-                    st.metric("最短解答時間", f"{1.0}分")
+                    st.metric("最短解答時間", f"{min_time:.1f}分")
                 with col3:
-                    st.metric("最長解答時間", f"{1.0}分")
+                    st.metric("最長解答時間", f"{max_time:.1f}分")
+                
+                # 解答時間の分布
+                st.subheader("解答時間の分布")
+                fig, ax = plt.subplots(figsize=(10, 6))
+                ax.hist(df['回答時間（分）'], bins=20, alpha=0.7)
+                ax.set_xlabel('Response Time (minutes)')
+                ax.set_ylabel('Frequency')
+                ax.grid(True, alpha=0.3)
+                plt.tight_layout()
+                st.pyplot(fig)
                 
             except Exception as e:
                 st.error(f"回答時間の分析中にエラーが発生しました: {str(e)}")
+                st.write("エラーの詳細:", e)
         else:
             st.info("解答時間のデータが見つかりませんでした。")
         
