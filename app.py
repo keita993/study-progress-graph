@@ -447,6 +447,36 @@ if uploaded_file is not None:
                 df[category_col] = df[category_col].map(lambda x: category_mapping.get(x, x))
                 st.success("分野名の文字化けを修正しました")
         
+        # 解答時間カラムを手動で指定するオプション
+        st.header("解答時間カラムの設定")
+        use_auto_detection = st.checkbox("解答時間カラムを自動検出する", value=True)
+
+        if not use_auto_detection:
+            time_col = st.selectbox("解答時間カラムを選択してください", df.columns.tolist())
+            st.success(f"解答時間カラムを '{time_col}' に設定しました")
+        else:
+            # 解答時間を分単位で処理
+            st.info("解答時間は「分」単位として処理します")
+
+            try:
+                # 実際のデータを使用
+                if df[time_col].dtype == 'object':
+                    # 文字列から数値を抽出
+                    df['回答時間（分）'] = df[time_col].astype(str).str.extract(r'(\d+\.?\d*)')[0].astype(float)
+                else:
+                    # 数値型の場合はそのまま使用
+                    df['回答時間（分）'] = df[time_col]
+                
+                # NaN値を0に置き換え
+                df['回答時間（分）'] = df['回答時間（分）'].fillna(0)
+                
+                st.success(f"解答時間データを正常に取得しました。平均: {df['回答時間（分）'].mean():.2f}分")
+            except Exception as e:
+                st.error(f"解答時間データの取得に失敗しました: {str(e)}")
+                # 固定値を使用
+                df['回答時間（分）'] = 1.0
+                st.warning("固定値（1.0分）を使用します")
+
         # 回答時間の分析部分
         st.header("解答時間の分析")
 
@@ -454,7 +484,7 @@ if uploaded_file is not None:
         time_col = None
         for col in df.columns:
             col_str = str(col).lower()
-            if '時間' in col_str or '解答' in col_str or 'time' in col_str:
+            if '時間' in col_str or '解答' in col_str or 'time' in col_str or '分' in col_str:
                 time_col = col
                 st.success(f"解答時間カラムを検出しました: {col}")
                 break
@@ -523,6 +553,29 @@ if uploaded_file is not None:
                 st.error(f"回答時間の分析中にエラーが発生しました: {str(e)}")
         else:
             st.info("解答時間のデータが見つかりませんでした。")
+        
+        # CSVファイルの詳細情報を表示
+        st.header("CSVファイルの詳細情報")
+        st.write("カラム一覧:", df.columns.tolist())
+        st.write("データ型:", df.dtypes)
+        st.write("先頭5行:", df.head())
+
+        # 解答時間カラムの候補を表示
+        time_col_candidates = []
+        for col in df.columns:
+            col_str = str(col)
+            if '時間' in col_str or '解答' in col_str or 'time' in col_str or '分' in col_str:
+                time_col_candidates.append(col)
+
+        st.write("解答時間カラムの候補:", time_col_candidates)
+
+        # 各カラムの最初の数値を表示
+        st.write("各カラムの最初の値:")
+        for col in df.columns:
+            try:
+                st.write(f"{col}: {df[col].iloc[0]}")
+            except:
+                st.write(f"{col}: 取得できません")
         
     except Exception as e:
         st.error(f"エラーが発生しました: {str(e)}")
