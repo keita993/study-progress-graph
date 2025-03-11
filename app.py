@@ -94,8 +94,8 @@ st.markdown("""
 h1, h2, h3, h4, h5, h6 {
     border-bottom: 2px solid #000;
     width: fit-content;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
+    padding-bottom: 2px;
+    margin-bottom: 10px;
 }
 </style>
 """, unsafe_allow_html=True)
