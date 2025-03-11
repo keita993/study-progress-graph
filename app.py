@@ -429,7 +429,7 @@ if uploaded_file is not None:
                     df['回答時間（分）'] = df['回答時間（分）'].fillna(0)
                 
                 # 異常値の処理
-                max_time_limit = st.slider("解答時間の上限（分）", min_value=1, max_value=120, value=30, step=1)
+                max_time_limit = st.slider("解答時間の上限（分）", min_value=1, max_value=120, value=35, step=1)
                 outliers_count = (df['回答時間（分）'] > max_time_limit).sum()
 
                 if outliers_count > 0:
