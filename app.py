@@ -2,7 +2,9 @@ import pandas as pd
 import matplotlib
 matplotlib.use('Agg')  # バックエンドを明示的に設定
 
-# フォント設定を強化
+# 日本語フォント設定を簡素化
+import japanize_matplotlib  # 日本語対応の簡単な方法
+
 import matplotlib.font_manager as fm
 import os
 
@@ -241,26 +243,25 @@ if uploaded_file is not None:
         
         # 日付ごとの平均正答率グラフ
         st.header("日付ごとの平均正答率")
-        fig, ax = create_figure(figsize=(10, 6))
+        fig, ax = plt.subplots(figsize=(10, 6))
         ax.plot(daily_avg.index, daily_avg.values, label='日次正答率')
         ax.plot(rolling_avg.index, rolling_avg.values, label='7日移動平均', linewidth=2)
         ax.set_ylabel('正答率 (%)')
         ax.set_xlabel('学習日')
         ax.legend()
         ax.grid(True, alpha=0.3)
-        plt.tight_layout()  # レイアウトを調整
+        plt.tight_layout()
         st.pyplot(fig)
         
         # 分野ごとの平均正答率グラフ
         st.header("分野ごとの平均正答率")
-        # Streamlitのbar_chartではなく、matplotlibを使用
-        fig, ax = create_figure(figsize=(10, 6))
+        fig, ax = plt.subplots(figsize=(10, 6))
         category_avg_sorted = category_avg.sort_values(ascending=False)
-        category_avg_sorted.plot(kind='bar', ax=ax)
+        ax.bar(category_avg_sorted.index, category_avg_sorted.values)
         ax.set_ylabel('正答率 (%)')
         ax.set_xlabel('分野')
         plt.xticks(rotation=45, ha='right')
-        plt.tight_layout()  # レイアウトを調整
+        plt.tight_layout()
         st.pyplot(fig)
         
         # 分野ごとの問題数
