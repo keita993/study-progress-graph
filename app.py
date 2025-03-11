@@ -343,126 +343,6 @@ if uploaded_file is not None:
             daily_time_avg = None
             time_rolling_avg = None
 
-        # ここで学習進捗の総合評価セクションを削除
-
-        # 他のすべての分析セクションを実行した後、ファイルの最後に学習進捗の総合評価セクションを追加
-        st.header("学習進捗の総合評価")
-
-        try:
-            # トレンド分析のための準備
-            # 条件チェックを修正 - 解答時間データの有無を確認
-            has_time_data = '回答時間（分）' in df.columns and daily_time_avg is not None and len(daily_time_avg) > 0
-            
-            # データが十分にあるかチェック
-            if len(daily_avg) >= 3:  # 最低3日分のデータがあれば分析可能
-                # 移動平均データを使用
-                recent_rolling_avg = rolling_avg.tail(min(7, len(rolling_avg)))  # 利用可能なデータを最大7日分使用
-                
-                # 正答率のトレンド分析
-                x_acc = range(len(recent_rolling_avg))
-                slope_acc, _, _, _, _ = stats.linregress(x_acc, recent_rolling_avg.values)
-                
-                # 評価を表示
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    if slope_acc > 0.5:
-                        st.success("📈 正答率が上昇傾向にあります！")
-                    elif slope_acc < -0.5:
-                        st.error("📉 正答率が下降傾向にあります")
-                    else:
-                        st.info("📊 正答率は安定しています")
-                
-                # 解答時間のトレンド分析（データがある場合のみ）
-                if has_time_data:
-                    # 解答時間データを取得
-                    recent_time_rolling_avg = time_rolling_avg.tail(min(7, len(time_rolling_avg)))
-                    
-                    # 解答時間のトレンド分析（十分なデータがある場合）
-                    if len(recent_time_rolling_avg) >= 3:
-                        with col2:
-                            x_time = range(len(recent_time_rolling_avg))
-                            slope_time, _, _, _, _ = stats.linregress(x_time, recent_time_rolling_avg.values)
-                            
-                            if slope_time < -0.2:
-                                st.success("⏱️ 解答時間が短縮傾向にあります！")
-                            elif slope_time > 0.2:
-                                st.warning("⏱️ 解答時間が増加傾向にあります")
-                            else:
-                                st.info("⏱️ 解答時間は安定しています")
-                        
-                        # 総合評価（解答時間データがある場合）
-                        if slope_acc > 0.5 and slope_time < -0.2:
-                            st.success("👍 正答率が上昇し、解答時間も短縮されています！学習がとても効果的に進んでいます！")
-                        elif slope_acc > 0.5:
-                            st.success("👍 正答率が上昇しています。理解度が高まっています！")
-                        elif slope_time < -0.2:
-                            st.success("👍 解答時間が短縮されています。解答スピードが向上しています！")
-                        elif slope_acc < -0.5 and slope_time > 0.2:
-                            st.error("📝 正答率が下降し、解答時間も増加しています。学習方法の見直しが必要かもしれません。")
-                        elif slope_acc < -0.5:
-                            st.warning("📝 正答率が下降しています。基礎的な部分の復習を検討してください。")
-                        elif slope_time > 0.2:
-                            st.warning("⏰ 解答時間が増加しています。問題の理解に時間がかかっているかもしれません。")
-                        else:
-                            st.info("📚 学習は安定して進んでいます。継続的な学習を続けましょう。")
-                    else:
-                        # 解答時間データが少ない場合
-                        with col2:
-                            st.info("⏱️ 解答時間の傾向分析には少なくとも3日分のデータが必要です")
-                        
-                        # 正答率のみで評価
-                        if slope_acc > 0.5:
-                            st.success("👍 正答率が上昇しています。理解度が高まっています！")
-                        elif slope_acc < -0.5:
-                            st.warning("📝 正答率が下降しています。基礎的な部分の復習を検討してください。")
-                        else:
-                            st.info("📚 学習は安定して進んでいます。継続的な学習を続けましょう。")
-                else:
-                    # 解答時間データがない場合
-                    with col2:
-                        st.info("⏱️ 解答時間のデータがありません")
-                    
-                    # 正答率のみで評価
-                    if slope_acc > 0.5:
-                        st.success("👍 正答率が上昇しています。理解度が高まっています！")
-                    elif slope_acc < -0.5:
-                        st.warning("📝 正答率が下降しています。基礎的な部分の復習を検討してください。")
-                    else:
-                        st.info("📚 学習は安定して進んでいます。継続的な学習を続けましょう。")
-                
-                # 詳細な分析結果
-                with st.expander("詳細な分析結果を見る"):
-                    st.write(f"移動平均の正答率変化: {slope_acc:.2f}%/日")
-                    
-                    if has_time_data and len(recent_time_rolling_avg) >= 3:
-                        st.write(f"移動平均の解答時間変化: {slope_time:.2f}分/日")
-                        
-                        # 解答時間のトレンド評価を追加
-                        if slope_time < -0.5:
-                            st.success("解答時間は大幅に短縮されています。知識の定着が進んでいる証拠です！")
-                        elif slope_time < -0.2:
-                            st.success("解答時間は徐々に短縮されています。学習の成果が出ています。")
-                        elif slope_time > 0.5:
-                            st.warning("解答時間が大幅に増加しています。問題の難易度が上がったか、集中力が低下している可能性があります。")
-                        elif slope_time > 0.2:
-                            st.warning("解答時間がやや増加しています。問題をじっくり考えるようになったか、難易度が上がっている可能性があります。")
-                        else:
-                            st.info("解答時間は安定しています。一定のペースで解答できています。")
-                        
-                        # 正答率と解答時間の相関
-                        if len(recent_rolling_avg) == len(recent_time_rolling_avg):
-                            corr = pd.Series(recent_rolling_avg.values).corr(pd.Series(recent_time_rolling_avg.values))
-                            st.write(f"正答率と解答時間の相関係数: {corr:.2f}")
-                            
-                            if corr < -0.5:
-                                st.write("👉 解答時間が短くなるほど正答率が高くなる傾向があります。知識が定着してきている証拠です！")
-                            elif corr > 0.5:
-                                st.write("👉 解答時間をかけるほど正答率が高くなる傾向があります。じっくり考えることで正解率が上がっています。")
-        except Exception as e:
-            st.error(f"トレンド分析中にエラーが発生しました: {str(e)}")
-            st.error(f"エラーの詳細: {type(e).__name__}")
-        
         # 日付ごとの平均正答率グラフ
         st.header("日付ごとの平均正答率")
         fig, ax = plt.subplots(figsize=(10, 6))
@@ -803,6 +683,124 @@ if uploaded_file is not None:
                 st.warning("基礎はできていますが、まだ改善の余地があります。苦手分野を中心に学習を続けましょう。")
             else:
                 st.error("基礎的な部分から見直す必要があります。テキストを再度確認し、基本概念の理解を深めましょう。")
+
+        # 学習進捗の総合評価セクションを最後に追加
+        st.header("学習進捗の総合評価")
+
+        try:
+            # トレンド分析のための準備
+            # 条件チェックを修正 - 解答時間データの有無を確認
+            has_time_data = '回答時間（分）' in df.columns and daily_time_avg is not None and len(daily_time_avg) > 0
+            
+            # データが十分にあるかチェック
+            if len(daily_avg) >= 3:  # 最低3日分のデータがあれば分析可能
+                # 移動平均データを使用
+                recent_rolling_avg = rolling_avg.tail(min(7, len(rolling_avg)))  # 利用可能なデータを最大7日分使用
+                
+                # 正答率のトレンド分析
+                x_acc = range(len(recent_rolling_avg))
+                slope_acc, _, _, _, _ = stats.linregress(x_acc, recent_rolling_avg.values)
+                
+                # 評価を表示
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    if slope_acc > 0.5:
+                        st.success("📈 正答率が上昇傾向にあります！")
+                    elif slope_acc < -0.5:
+                        st.error("📉 正答率が下降傾向にあります")
+                    else:
+                        st.info("📊 正答率は安定しています")
+                
+                # 解答時間のトレンド分析（データがある場合のみ）
+                if has_time_data:
+                    # 解答時間データを取得
+                    recent_time_rolling_avg = time_rolling_avg.tail(min(7, len(time_rolling_avg)))
+                    
+                    # 解答時間のトレンド分析（十分なデータがある場合）
+                    if len(recent_time_rolling_avg) >= 3:
+                        with col2:
+                            x_time = range(len(recent_time_rolling_avg))
+                            slope_time, _, _, _, _ = stats.linregress(x_time, recent_time_rolling_avg.values)
+                            
+                            if slope_time < -0.2:
+                                st.success("⏱️ 解答時間が短縮傾向にあります！")
+                            elif slope_time > 0.2:
+                                st.warning("⏱️ 解答時間が増加傾向にあります")
+                            else:
+                                st.info("⏱️ 解答時間は安定しています")
+                        
+                        # 総合評価（解答時間データがある場合）
+                        if slope_acc > 0.5 and slope_time < -0.2:
+                            st.success("👍 正答率が上昇し、解答時間も短縮されています！学習がとても効果的に進んでいます！")
+                        elif slope_acc > 0.5:
+                            st.success("👍 正答率が上昇しています。理解度が高まっています！")
+                        elif slope_time < -0.2:
+                            st.success("👍 解答時間が短縮されています。解答スピードが向上しています！")
+                        elif slope_acc < -0.5 and slope_time > 0.2:
+                            st.error("📝 正答率が下降し、解答時間も増加しています。学習方法の見直しが必要かもしれません。")
+                        elif slope_acc < -0.5:
+                            st.warning("📝 正答率が下降しています。基礎的な部分の復習を検討してください。")
+                        elif slope_time > 0.2:
+                            st.warning("⏰ 解答時間が増加しています。問題の理解に時間がかかっているかもしれません。")
+                        else:
+                            st.info("📚 学習は安定して進んでいます。継続的な学習を続けましょう。")
+                    else:
+                        # 解答時間データが少ない場合
+                        with col2:
+                            st.info("⏱️ 解答時間の傾向分析には少なくとも3日分のデータが必要です")
+                        
+                        # 正答率のみで評価
+                        if slope_acc > 0.5:
+                            st.success("👍 正答率が上昇しています。理解度が高まっています！")
+                        elif slope_acc < -0.5:
+                            st.warning("📝 正答率が下降しています。基礎的な部分の復習を検討してください。")
+                        else:
+                            st.info("📚 学習は安定して進んでいます。継続的な学習を続けましょう。")
+                    else:
+                        # 解答時間データがない場合
+                        with col2:
+                            st.info("⏱️ 解答時間のデータがありません")
+                        
+                        # 正答率のみで評価
+                        if slope_acc > 0.5:
+                            st.success("👍 正答率が上昇しています。理解度が高まっています！")
+                        elif slope_acc < -0.5:
+                            st.warning("�� 正答率が下降しています。基礎的な部分の復習を検討してください。")
+                        else:
+                            st.info("📚 学習は安定して進んでいます。継続的な学習を続けましょう。")
+                    
+                    # 詳細な分析結果
+                    with st.expander("詳細な分析結果を見る"):
+                        st.write(f"移動平均の正答率変化: {slope_acc:.2f}%/日")
+                        
+                        if has_time_data and len(recent_time_rolling_avg) >= 3:
+                            st.write(f"移動平均の解答時間変化: {slope_time:.2f}分/日")
+                            
+                            # 解答時間のトレンド評価を追加
+                            if slope_time < -0.5:
+                                st.success("解答時間は大幅に短縮されています。知識の定着が進んでいる証拠です！")
+                            elif slope_time < -0.2:
+                                st.success("解答時間は徐々に短縮されています。学習の成果が出ています。")
+                            elif slope_time > 0.5:
+                                st.warning("解答時間が大幅に増加しています。問題の難易度が上がったか、集中力が低下している可能性があります。")
+                            elif slope_time > 0.2:
+                                st.warning("解答時間がやや増加しています。問題をじっくり考えるようになったか、難易度が上がっている可能性があります。")
+                            else:
+                                st.info("解答時間は安定しています。一定のペースで解答できています。")
+                            
+                            # 正答率と解答時間の相関
+                            if len(recent_rolling_avg) == len(recent_time_rolling_avg):
+                                corr = pd.Series(recent_rolling_avg.values).corr(pd.Series(recent_time_rolling_avg.values))
+                                st.write(f"正答率と解答時間の相関係数: {corr:.2f}")
+                                
+                                if corr < -0.5:
+                                    st.write("👉 解答時間が短くなるほど正答率が高くなる傾向があります。知識が定着してきている証拠です！")
+                                elif corr > 0.5:
+                                    st.write("👉 解答時間をかけるほど正答率が高くなる傾向があります。じっくり考えることで正解率が上がっています。")
+        except Exception as e:
+            st.error(f"トレンド分析中にエラーが発生しました: {str(e)}")
+            st.error(f"エラーの詳細: {type(e).__name__}")
         
     except Exception as e:
         st.error(f"エラーが発生しました: {str(e)}")
