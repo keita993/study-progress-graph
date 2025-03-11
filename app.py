@@ -612,36 +612,6 @@ if uploaded_file is not None:
         else:
             st.info("解答時間のデータが見つかりませんでした。")
         
-        # CSVファイルの詳細情報を表示
-        st.header("CSVファイルの詳細情報")
-        st.write("カラム一覧:", df.columns.tolist())
-        st.write("データ型:", df.dtypes)
-        st.write("先頭5行:", df.head())
-
-        # 解答時間カラムの候補を表示 - 改良版
-        time_col_candidates = []
-        for col in df.columns:
-            col_str = str(col)
-            # 「分野」は除外
-            if ('時間' in col_str or '解答' in col_str or 'time' in col_str or ('分' in col_str and '分野' not in col_str)):
-                time_col_candidates.append(col)
-
-        st.write("解答時間カラムの候補:", time_col_candidates)
-
-        # 各カラムの最初の数値を表示
-        st.write("各カラムの最初の値:")
-        for col in df.columns:
-            try:
-                st.write(f"{col}: {df[col].iloc[0]}")
-            except:
-                st.write(f"{col}: 取得できません")
-        
-        if not time_col_candidates:
-            st.warning("解答時間カラムの候補が見つかりませんでした。手動で選択してください。")
-            use_auto_detection = False
-            time_col = st.selectbox("解答時間カラムを選択してください", df.columns.tolist())
-            st.success(f"解答時間カラムを '{time_col}' に設定しました")
-        
     except Exception as e:
         st.error(f"エラーが発生しました: {str(e)}")
 else:
