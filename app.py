@@ -198,7 +198,7 @@ if uploaded_file is not None:
             import chardet
             result = chardet.detect(file_content)
             detected_encoding = result['encoding']
-            st.info(f"検出されたエンコーディング: {detected_encoding}")
+            
         except:
             detected_encoding = None
         
@@ -216,7 +216,7 @@ if uploaded_file is not None:
                 import io
                 string_data = io.StringIO(file_content.decode(encoding))
                 df = pd.read_csv(string_data)
-                st.success(f"エンコーディング '{encoding}' で正常に読み込みました")
+                
                 break
             except UnicodeDecodeError as e:
                 error_messages.append(f"エンコーディング '{encoding}' でのデコードに失敗: {str(e)}")
