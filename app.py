@@ -81,6 +81,15 @@ import os
 import urllib.request
 import re
 import numpy as np
+import subprocess
+import sys
+
+# scipyがインストールされているか確認し、なければインストール
+try:
+    import scipy
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "scipy"])
+    import scipy
 
 # ページ設定
 st.set_page_config(
