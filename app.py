@@ -506,6 +506,43 @@ if uploaded_file is not None:
                     st.warning(f"{nan_count}個のNaN値を0に置き換えました")
                     df['回答時間（分）'] = df['回答時間（分）'].fillna(0)
                 
+                # 異常値の処理
+                max_time_limit = st.slider("解答時間の上限（分）", min_value=1, max_value=120, value=60, step=1)
+                outliers_count = (df['回答時間（分）'] > max_time_limit).sum()
+
+                if outliers_count > 0:
+                    # 異常値を含むデータフレームを保存
+                    df_with_outliers = df.copy()
+                    
+                    # 異常値を除外
+                    df_filtered = df[df['回答時間（分）'] <= max_time_limit].copy()
+                    
+                    st.warning(f"{outliers_count}個の異常値（{max_time_limit}分超）を除外しました")
+                    
+                    # 除外前後の統計情報を表示
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.subheader("除外前の統計")
+                        st.metric("データ数", f"{len(df_with_outliers)}個")
+                        st.metric("平均解答時間", f"{df_with_outliers['回答時間（分）'].mean():.1f}分")
+                        st.metric("最大解答時間", f"{df_with_outliers['回答時間（分）'].max():.1f}分")
+                    
+                    with col2:
+                        st.subheader("除外後の統計")
+                        st.metric("データ数", f"{len(df_filtered)}個")
+                        st.metric("平均解答時間", f"{df_filtered['回答時間（分）'].mean():.1f}分")
+                        st.metric("最大解答時間", f"{df_filtered['回答時間（分）'].max():.1f}分")
+                    
+                    # 除外したデータを表示するオプション
+                    if st.checkbox("除外したデータを表示"):
+                        excluded_data = df_with_outliers[df_with_outliers['回答時間（分）'] > max_time_limit]
+                        st.dataframe(excluded_data)
+                    
+                    # 以降の分析には除外後のデータを使用
+                    df = df_filtered
+                else:
+                    st.success(f"異常値（{max_time_limit}分超）はありませんでした")
+                
                 # 日付ごとの平均回答時間
                 daily_time_avg = df.groupby(date_col)['回答時間（分）'].mean()
                 
