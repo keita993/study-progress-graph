@@ -73,29 +73,37 @@ if uploaded_file is not None:
             except:
                 st.stop()
         
-        # カラム名を検出して修正
-        columns = df.columns.tolist()
-        
-        # 文字化けしたカラム名を修正
-        if 'wK' in ''.join(columns):
-            # 文字化けしている場合のマッピング
+        # カラム名を検出して修正する部分を改善
+        if df is not None:
+            # 文字化けしたカラム名を修正
             column_mapping = {}
-            for col in columns:
-                if 'wK' in col:
+            for col in df.columns:
+                # バイト列に変換して文字化けパターンを検出
+                col_bytes = str(col).encode('unicode_escape')
+                
+                # 学習日カラムの検出
+                if b'\\u' in col_bytes and (b'w' in col_bytes or b'K' in col_bytes):
                     column_mapping[col] = '学習日'
-                elif 'oT' in col:
+                # 出題カラムの検出
+                elif b'\\u' in col_bytes and (b'o' in col_bytes or b'T' in col_bytes):
                     column_mapping[col] = '出題'
-                elif '' in col and len(col) <= 2:
+                # 分野カラムの検出
+                elif b'\\u' in col_bytes and len(col) <= 2:
                     column_mapping[col] = '分野'
-                elif '𓚎' in col or '時間' in col:
+                # 解答時間カラムの検出
+                elif b'\\u' in col_bytes and b'\\u' in col_bytes:
                     column_mapping[col] = '解答時間'
-                elif '' in col and '率' in col:
+                # 正答率カラムの検出
+                elif b'\\u' in col_bytes and b'\\u' in col_bytes and any(c in str(col) for c in ['率', '％', '%']):
                     column_mapping[col] = '正答率'
-                elif '' in col and '答' in col:
+                # 回答カラムの検出
+                elif b'\\u' in col_bytes and any(c in str(col) for c in ['答', '解']):
                     column_mapping[col] = '回答'
             
+            # カラム名を修正
             if column_mapping:
                 df = df.rename(columns=column_mapping)
+                st.success("文字化けしたカラム名を修正しました")
         
         # 必要なカラムを特定
         date_col = None
@@ -122,13 +130,20 @@ if uploaded_file is not None:
         
         # カラムが見つからない場合は選択させる
         if date_col is None:
-            date_col = st.selectbox("学習日のカラムを選択してください", options=df.columns.tolist())
-        
+            # カラム名を表示用に整形
+            display_columns = [f"{i}: {col}" for i, col in enumerate(df.columns)]
+            selected_index = st.selectbox("学習日のカラムを選択してください", options=range(len(df.columns)), format_func=lambda x: display_columns[x])
+            date_col = df.columns[selected_index]
+
         if category_col is None:
-            category_col = st.selectbox("分野のカラムを選択してください", options=df.columns.tolist())
-        
+            display_columns = [f"{i}: {col}" for i, col in enumerate(df.columns)]
+            selected_index = st.selectbox("分野のカラムを選択してください", options=range(len(df.columns)), format_func=lambda x: display_columns[x])
+            category_col = df.columns[selected_index]
+
         if score_col is None:
-            score_col = st.selectbox("正答率のカラムを選択してください", options=df.columns.tolist())
+            display_columns = [f"{i}: {col}" for i, col in enumerate(df.columns)]
+            selected_index = st.selectbox("正答率のカラムを選択してください", options=range(len(df.columns)), format_func=lambda x: display_columns[x])
+            score_col = df.columns[selected_index]
         
         # 日付を日付型に変換
         try:
