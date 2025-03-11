@@ -258,7 +258,7 @@ if uploaded_file is not None:
         fig, ax = plt.subplots(figsize=(10, 6))
         category_avg_sorted = category_avg.sort_values(ascending=False)
         
-        # 分野名を英語に変換（オプション）
+        # 分野名を英語に変換（文字化け対策）
         category_mapping = {
             'セキュリティ': 'Security',
             'システムアーキテクチャ': 'System Architecture',
@@ -273,16 +273,26 @@ if uploaded_file is not None:
             'システム監査': 'System Audit'
         }
         
-        # インデックスを英語に変換（オプション）
-        if False:  # 必要に応じてTrueに変更
-            category_avg_sorted.index = [category_mapping.get(cat, cat) for cat in category_avg_sorted.index]
+        # インデックスを英語に変換（文字化け対策）
+        category_avg_sorted_en = category_avg_sorted.copy()
+        category_avg_sorted_en.index = [category_mapping.get(cat, str(cat)) for cat in category_avg_sorted.index]
         
-        ax.bar(category_avg_sorted.index, category_avg_sorted.values)
+        # 英語ラベルでグラフ描画
+        ax.bar(range(len(category_avg_sorted_en)), category_avg_sorted_en.values)
         ax.set_ylabel('Accuracy (%)')
         ax.set_xlabel('Category')
-        plt.xticks(rotation=45, ha='right')
+        plt.xticks(range(len(category_avg_sorted_en)), category_avg_sorted_en.index, rotation=45, ha='right')
         plt.tight_layout()
         st.pyplot(fig)
+        
+        # 元の日本語名と英語名の対応表を表示
+        st.caption("分野名対応表:")
+        mapping_df = pd.DataFrame({
+            '日本語分野名': category_avg_sorted.index,
+            '英語分野名': [category_mapping.get(cat, str(cat)) for cat in category_avg_sorted.index],
+            '正答率': [f"{val:.1f}%" for val in category_avg_sorted.values]
+        })
+        st.dataframe(mapping_df)
         
         # 分野ごとの問題数
         category_count = df.groupby(category_col).size().sort_values(ascending=False)
