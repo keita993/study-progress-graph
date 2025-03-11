@@ -92,21 +92,21 @@ st.set_page_config(
 st.markdown("""
 <style>
 h1, h2, h3, h4, h5, h6 {
-    border-bottom: none;  /* 通常のボーダーを削除 */
+    border-bottom: none;
     width: fit-content;
-    padding-bottom: 0;
-    margin-bottom: 0;
-    line-height: 1;
+    padding: 0;
+    margin: 0;
+    line-height: 0.9;
     display: inline-block;
-    position: relative;  /* 疑似要素の配置のため */
+    position: relative;
 }
 
-/* 下線を疑似要素で追加 */
+/* 下線を疑似要素で追加 - さらに近づける */
 h1::after, h2::after, h3::after, h4::after, h5::after, h6::after {
     content: "";
     position: absolute;
     left: 0;
-    bottom: 0;  /* テキストの真下に配置 */
+    bottom: -1px;  /* マイナス値でさらに上に */
     width: 100%;
     height: 2px;
     background-color: #000;
@@ -115,13 +115,29 @@ h1::after, h2::after, h3::after, h4::after, h5::after, h6::after {
 /* h1のみ余白を追加 */
 h1 {
     margin-bottom: 15px;
-    line-height: 1.2;
+    line-height: 1.1;
 }
 
 /* Streamlitのデフォルトスタイルを上書き */
 .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4, .stMarkdown h5, .stMarkdown h6 {
-    margin-top: 0.3em !important;
-    margin-bottom: 0.2em !important;
+    margin-top: 0.2em !important;
+    margin-bottom: 0.1em !important;
+}
+
+/* 特定のヘッダーサイズごとに微調整 */
+h2::after { bottom: -2px; }
+h3::after { bottom: -1px; }
+h4::after, h5::after, h6::after { bottom: 0px; }
+
+/* Streamlitのマークダウンコンテナのパディングを調整 */
+.stMarkdown {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* ヘッダーの下の余白を削除 */
+.stMarkdown > div > p {
+    margin-top: 0 !important;
 }
 </style>
 """, unsafe_allow_html=True)
