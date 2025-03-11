@@ -323,10 +323,7 @@ if uploaded_file is not None:
             st.stop()
         
         # 分析処理
-        st.header("概要")
-        overall_avg = df[score_col].mean()
-        st.metric("全体の平均正答率", f"{overall_avg*100:.1f}%")
-
+       
         # 日付ごとの平均正答率を計算
         daily_avg = df.groupby(date_col)[score_col].mean() * 100
 
