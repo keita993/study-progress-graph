@@ -831,32 +831,23 @@ if uploaded_file is not None:
 else:
     st.markdown('<div class="info-box">CSVファイルをアップロードしてください。</div>', unsafe_allow_html=True)
 
-# 概要セクション
+# 最後に追加された空のセクションを削除
 st.markdown('<div class="section-overview">', unsafe_allow_html=True)
 st.markdown('<div class="section-title">📊 学習概要</div>', unsafe_allow_html=True)
-# 概要の内容
 st.markdown('</div>', unsafe_allow_html=True)
 
-# 日付分析セクション
 st.markdown('<div class="section-date">', unsafe_allow_html=True)
 st.markdown('<div class="section-title">📅 日付ごとの分析</div>', unsafe_allow_html=True)
-# 日付分析の内容
 st.markdown('</div>', unsafe_allow_html=True)
 
-# 分野分析セクション
 st.markdown('<div class="section-category">', unsafe_allow_html=True)
 st.markdown('<div class="section-title">🔍 分野ごとの分析</div>', unsafe_allow_html=True)
-# 分野分析の内容
 st.markdown('</div>', unsafe_allow_html=True)
 
-# 時間分析セクション
 st.markdown('<div class="section-time">', unsafe_allow_html=True)
 st.markdown('<div class="section-title">⏱️ 解答時間の分析</div>', unsafe_allow_html=True)
-# 時間分析の内容
 st.markdown('</div>', unsafe_allow_html=True)
 
-# AI分析セクション
 st.markdown('<div class="section-ai">', unsafe_allow_html=True)
 st.markdown('<div class="section-title">🤖 AI分析</div>', unsafe_allow_html=True)
-# AI分析の内容
 st.markdown('</div>', unsafe_allow_html=True) 
