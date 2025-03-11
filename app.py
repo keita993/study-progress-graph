@@ -88,6 +88,17 @@ st.set_page_config(
     page_icon="📊"
 )
 
+# カスタムCSSを追加
+st.markdown("""
+<style>
+h1, h2, h3, h4, h5, h6 {
+    border-bottom: 2px solid #000;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+</style>
+""", unsafe_allow_html=True)
+
 st.title("応用情報技術者試験 学習分析")
 
 # ファイルアップロード
