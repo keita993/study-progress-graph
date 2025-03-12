@@ -531,7 +531,7 @@ if uploaded_file is not None:
 
         # 分野ごとの詳細データを表示（正答率が高い順に並び替え）
         category_count = df.groupby(category_col).size()
-        category_avg_sorted = df.groupby(category_col)[score_col].mean().sort_values(ascending=False)
+        category_avg_sorted = df.groupby(category_col)[score_col].mean().sort_values(ascending=False) * 100
         category_stats = pd.DataFrame({
             '分野': category_avg_sorted.index,
             '問題数': [category_count[cat] for cat in category_avg_sorted.index],
